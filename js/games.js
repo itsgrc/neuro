@@ -1,0 +1,659 @@
+/* ============================================================
+   NeuroSpazio — games.js
+   Sei giochi di allenamento cognitivo, pensati per essere
+   brevi, chiari e gratificanti. Ogni gioco salva il record.
+   ============================================================ */
+
+const GAMES = [
+  {
+    id: "memoria",
+    emoji: "🃏",
+    nome: "Coppie di memoria",
+    desc: "Trova le coppie di carte uguali. Allena la memoria di lavoro.",
+    tag: "memoria",
+    render: renderMemoria,
+  },
+  {
+    id: "stroop",
+    emoji: "🌈",
+    nome: "Colore ribelle",
+    desc: "Tocca il colore dell'inchiostro, non la parola! Allena il controllo degli impulsi.",
+    tag: "focus",
+    render: renderStroop,
+  },
+  {
+    id: "riflessi",
+    emoji: "⚡",
+    nome: "Scatto felino",
+    desc: "Premi appena lo schermo diventa verde. Misura i tuoi riflessi.",
+    tag: "focus",
+    render: renderRiflessi,
+  },
+  {
+    id: "simon",
+    emoji: "🎵",
+    nome: "Sequenza luminosa",
+    desc: "Ripeti la sequenza di luci e suoni, sempre più lunga.",
+    tag: "memoria",
+    render: renderSimon,
+  },
+  {
+    id: "numeri",
+    emoji: "🔍",
+    nome: "Caccia ai numeri",
+    desc: "Trova i numeri in ordine il più in fretta possibile. Allena l'attenzione visiva.",
+    tag: "focus",
+    render: renderNumeri,
+  },
+  {
+    id: "flusso",
+    emoji: "🌊",
+    nome: "Flusso (n-back)",
+    desc: "Il simbolo è uguale a quello di prima? Sfida per la memoria di lavoro.",
+    tag: "memoria",
+    render: renderFlusso,
+  },
+];
+
+/* ---------- utilità comuni ai giochi ---------- */
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function fmtSec(s) {
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m > 0 ? `${m}:${String(r).padStart(2, "0")}` : `${r}s`;
+}
+
+/** Card di fine partita con eventuale record. */
+function gameOverCard(container, { emoji, titolo, righe, isRecord, replay }) {
+  App.recordGamePlayed();
+  container.innerHTML = `
+    <div class="card game-over-card">
+      <div class="big-emoji">${emoji}</div>
+      <h2>${titolo}</h2>
+      ${righe.map(r => `<p class="result-line">${r}</p>`).join("")}
+      ${isRecord ? `<p class="result-line record">🏆 Nuovo record personale!</p>` : ""}
+      <div class="btn-row" style="justify-content:center; margin-top:1.2rem">
+        <button class="btn btn-big" data-replay>🔁 Rigioca</button>
+        <a class="btn btn-ghost" href="#/giochi">Altri giochi</a>
+      </div>
+    </div>`;
+  if (isRecord) App.confetti();
+  container.querySelector("[data-replay]").addEventListener("click", replay);
+}
+
+/* ============================================================
+   1) COPPIE DI MEMORIA
+   ============================================================ */
+function renderMemoria(container) {
+  const EMOJIS = ["🐶","🐱","🦊","🐼","🐸","🦋","🌻","🍕","🚀","🌈","⭐","🎈","🍓","🐙","🎧","🧩","🍩","🌵","⚽","🎨"];
+  const LIVELLI = [
+    { id: "facile", nome: "Facile", coppie: 6, cols: 4 },
+    { id: "medio", nome: "Medio", coppie: 8, cols: 4 },
+    { id: "difficile", nome: "Difficile", coppie: 12, cols: 6 },
+  ];
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Scegli la difficoltà</h2>
+        <p style="color:var(--text-soft); margin-bottom:1rem">Trova tutte le coppie con meno mosse possibili.</p>
+        <div class="btn-row" style="justify-content:center">
+          ${LIVELLI.map(l => `<button class="btn btn-big" data-lvl="${l.id}">${l.nome} · ${l.coppie} coppie</button>`).join("")}
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
+  }
+
+  function start(lvl) {
+    const cards = shuffle(
+      shuffle(EMOJIS).slice(0, lvl.coppie).flatMap(e => [e, e])
+    );
+    let first = null, lock = false, mosse = 0, trovate = 0, sec = 0;
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Mosse: <span data-mosse>0</span></div>
+        <div class="hud-item">Coppie: <span data-coppie>0/${lvl.coppie}</span></div>
+        <div class="hud-item">⏱ <span data-tempo>0s</span></div>
+      </div>
+      <div class="memory-grid cols-${lvl.cols}" data-grid></div>`;
+
+    const grid = container.querySelector("[data-grid]");
+    const elMosse = container.querySelector("[data-mosse]");
+    const elCoppie = container.querySelector("[data-coppie]");
+    const elTempo = container.querySelector("[data-tempo]");
+
+    const timer = setInterval(() => { sec++; elTempo.textContent = fmtSec(sec); }, 1000);
+    App.addCleanup(() => clearInterval(timer));
+
+    cards.forEach((emoji) => {
+      const btn = document.createElement("button");
+      btn.className = "mem-card";
+      btn.textContent = emoji;
+      btn.setAttribute("aria-label", "Carta coperta");
+      btn.addEventListener("click", () => {
+        if (lock || btn.classList.contains("revealed") || btn.classList.contains("matched")) return;
+        btn.classList.add("revealed");
+        btn.setAttribute("aria-label", `Carta: ${emoji}`);
+        App.beep(520, 0.05);
+        if (!first) { first = btn; return; }
+        mosse++; elMosse.textContent = mosse;
+        if (first.textContent === btn.textContent) {
+          first.classList.add("matched"); btn.classList.add("matched");
+          first = null;
+          trovate++;
+          elCoppie.textContent = `${trovate}/${lvl.coppie}`;
+          App.beep(760, 0.1);
+          if (trovate === lvl.coppie) {
+            clearInterval(timer);
+            const isRecord = DB.submitScore(`memoria-${lvl.id}`, `Memoria (${lvl.nome})`, mosse, "low");
+            gameOverCard(container, {
+              emoji: "🎉", titolo: "Tutte le coppie trovate!",
+              righe: [`Mosse: <strong>${mosse}</strong>`, `Tempo: <strong>${fmtSec(sec)}</strong>`],
+              isRecord, replay: () => start(lvl),
+            });
+          }
+        } else {
+          lock = true;
+          const a = first, b = btn;
+          first = null;
+          setTimeout(() => {
+            a.classList.remove("revealed"); b.classList.remove("revealed");
+            a.setAttribute("aria-label", "Carta coperta");
+            b.setAttribute("aria-label", "Carta coperta");
+            lock = false;
+          }, 750);
+        }
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  menu();
+}
+
+/* ============================================================
+   2) COLORE RIBELLE (test di Stroop)
+   ============================================================ */
+function renderStroop(container) {
+  const COLORI = [
+    { nome: "ROSSO", css: "#e74c3c" },
+    { nome: "VERDE", css: "#27ae60" },
+    { nome: "BLU", css: "#2980b9" },
+    { nome: "GIALLO", css: "#d8a013" },
+  ];
+  const DURATA = 45;
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Colore ribelle</h2>
+        <p style="color:var(--text-soft); max-width:46ch; margin:0 auto 1rem">
+          Vedrai una parola scritta con un colore che non c'entra nulla.<br>
+          <strong>Tocca il colore dell'inchiostro</strong>, ignora quello che c'è scritto!<br>
+          Hai ${DURATA} secondi.
+        </p>
+        <button class="btn btn-big" data-start>▶️ Inizia</button>
+      </div>`;
+    container.querySelector("[data-start]").addEventListener("click", start);
+  }
+
+  function start() {
+    let punti = 0, errori = 0, resta = DURATA, corrente = null;
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">✅ <span data-ok>0</span></div>
+        <div class="hud-item">❌ <span data-no>0</span></div>
+        <div class="hud-item">⏱ <span data-tempo>${DURATA}s</span></div>
+      </div>
+      <div class="card">
+        <div class="stroop-word" data-word></div>
+        <div class="stroop-btns" data-btns></div>
+      </div>`;
+
+    const elWord = container.querySelector("[data-word]");
+    const elOk = container.querySelector("[data-ok]");
+    const elNo = container.querySelector("[data-no]");
+    const elTempo = container.querySelector("[data-tempo]");
+    const elBtns = container.querySelector("[data-btns]");
+
+    COLORI.forEach(c => {
+      const b = document.createElement("button");
+      b.className = "stroop-btn";
+      b.style.background = c.css;
+      b.textContent = c.nome;
+      b.addEventListener("click", () => {
+        if (!corrente) return;
+        if (c.nome === corrente.ink.nome) {
+          punti++; elOk.textContent = punti; App.beep(700, 0.05);
+        } else {
+          errori++; elNo.textContent = errori; App.beep(180, 0.12);
+        }
+        prossima();
+      });
+      elBtns.appendChild(b);
+    });
+
+    function prossima() {
+      const word = COLORI[Math.floor(Math.random() * COLORI.length)];
+      let ink;
+      do { ink = COLORI[Math.floor(Math.random() * COLORI.length)]; }
+      while (ink.nome === word.nome && Math.random() > 0.25); // a volte coincidono: tiene sveglia l'attenzione
+      corrente = { word, ink };
+      elWord.textContent = word.nome;
+      elWord.style.color = ink.css;
+    }
+
+    const timer = setInterval(() => {
+      resta--;
+      elTempo.textContent = `${resta}s`;
+      if (resta <= 0) {
+        clearInterval(timer);
+        const isRecord = DB.submitScore("stroop", "Colore ribelle", punti, "high");
+        gameOverCard(container, {
+          emoji: punti >= 25 ? "🤩" : "💪",
+          titolo: "Tempo scaduto!",
+          righe: [`Risposte giuste: <strong>${punti}</strong>`, `Errori: <strong>${errori}</strong>`],
+          isRecord, replay: start,
+        });
+      }
+    }, 1000);
+    App.addCleanup(() => clearInterval(timer));
+
+    prossima();
+  }
+
+  menu();
+}
+
+/* ============================================================
+   3) SCATTO FELINO (tempo di reazione)
+   ============================================================ */
+function renderRiflessi(container) {
+  const ROUNDS = 5;
+
+  function start() {
+    let round = 0, tempi = [], stato = "idle", goTime = 0, timeoutId = null;
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Round: <span data-round>0/${ROUNDS}</span></div>
+        <div class="hud-item">Media: <span data-media>—</span></div>
+      </div>
+      <button class="react-zone waiting" data-zone>
+        Tocca per iniziare.<br>Poi aspetta il VERDE e scatta! 🐈
+      </button>`;
+
+    const zona = container.querySelector("[data-zone]");
+    const elRound = container.querySelector("[data-round]");
+    const elMedia = container.querySelector("[data-media]");
+    App.addCleanup(() => clearTimeout(timeoutId));
+
+    function attesa() {
+      stato = "ready";
+      zona.className = "react-zone ready";
+      zona.innerHTML = "Aspetta il verde… 🤫";
+      timeoutId = setTimeout(() => {
+        stato = "go";
+        goTime = performance.now();
+        zona.className = "react-zone go";
+        zona.innerHTML = "ORA! 🐾";
+        App.beep(880, 0.06);
+      }, 1200 + Math.random() * 2500);
+    }
+
+    zona.addEventListener("click", () => {
+      if (stato === "idle") { attesa(); return; }
+      if (stato === "ready") {
+        // partenza anticipata
+        clearTimeout(timeoutId);
+        stato = "idle";
+        zona.className = "react-zone waiting";
+        zona.innerHTML = "Troppo presto! 😅<br>Tocca per riprovare questo round.";
+        App.beep(160, 0.15);
+        return;
+      }
+      if (stato === "go") {
+        const ms = Math.round(performance.now() - goTime);
+        tempi.push(ms);
+        round++;
+        elRound.textContent = `${round}/${ROUNDS}`;
+        const media = Math.round(tempi.reduce((a, b) => a + b, 0) / tempi.length);
+        elMedia.textContent = `${media} ms`;
+        if (round >= ROUNDS) {
+          const isRecord = DB.submitScore("riflessi", "Scatto felino", media, "low");
+          const migliore = Math.min(...tempi);
+          gameOverCard(container, {
+            emoji: media < 300 ? "🐆" : "🐢",
+            titolo: media < 300 ? "Riflessi felini!" : "Bel ritmo, si può migliorare!",
+            righe: [`Media: <strong>${media} ms</strong>`, `Scatto migliore: <strong>${migliore} ms</strong>`],
+            isRecord, replay: start,
+          });
+        } else {
+          stato = "idle";
+          zona.className = "react-zone waiting";
+          zona.innerHTML = `${ms} ms! 🎯<br>Tocca per il round ${round + 1}.`;
+        }
+      }
+    });
+  }
+
+  start();
+}
+
+/* ============================================================
+   4) SEQUENZA LUMINOSA (Simon)
+   ============================================================ */
+function renderSimon(container) {
+  const PADS = [
+    { id: 0, cls: "simon-red", freq: 261.6 },
+    { id: 1, cls: "simon-green", freq: 329.6 },
+    { id: 2, cls: "simon-blue", freq: 392.0 },
+    { id: 3, cls: "simon-yellow", freq: 523.3 },
+  ];
+
+  function start() {
+    let seq = [], pos = 0, accettaInput = false, livello = 0;
+    let timeouts = [];
+    App.addCleanup(() => timeouts.forEach(clearTimeout));
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Livello: <span data-lvl>0</span></div>
+        <div class="hud-item">Record: <span data-best>${DB.state.stats.bestScores.simon?.value ?? "—"}</span></div>
+      </div>
+      <p class="game-msg" data-msg>Osserva la sequenza… poi ripetila!</p>
+      <div class="simon-board" data-board></div>
+      <div class="btn-row" style="justify-content:center; margin-top:1.2rem">
+        <button class="btn btn-big" data-go>▶️ Inizia</button>
+      </div>`;
+
+    const board = container.querySelector("[data-board]");
+    const elMsg = container.querySelector("[data-msg]");
+    const elLvl = container.querySelector("[data-lvl]");
+    const btnGo = container.querySelector("[data-go]");
+
+    const padEls = PADS.map(p => {
+      const b = document.createElement("button");
+      b.className = `simon-pad ${p.cls}`;
+      b.disabled = true;
+      b.setAttribute("aria-label", `Tasto ${p.cls.replace("simon-", "")}`);
+      b.addEventListener("click", () => tap(p, b));
+      board.appendChild(b);
+      return b;
+    });
+
+    function accendi(p, el, dur = 320) {
+      el.classList.add("lit");
+      App.beep(p.freq, dur / 1000);
+      timeouts.push(setTimeout(() => el.classList.remove("lit"), dur));
+    }
+
+    function mostraSequenza() {
+      accettaInput = false;
+      padEls.forEach(e => (e.disabled = true));
+      elMsg.textContent = "Osserva… 👀";
+      const velocita = Math.max(650 - livello * 22, 320);
+      seq.forEach((idx, i) => {
+        timeouts.push(setTimeout(() => {
+          accendi(PADS[idx], padEls[idx]);
+          if (i === seq.length - 1) {
+            timeouts.push(setTimeout(() => {
+              accettaInput = true;
+              pos = 0;
+              padEls.forEach(e => (e.disabled = false));
+              elMsg.textContent = "Tocca a te! 🎯";
+            }, velocita));
+          }
+        }, 600 + i * velocita));
+      });
+    }
+
+    function prossimoLivello() {
+      livello++;
+      elLvl.textContent = livello;
+      seq.push(Math.floor(Math.random() * 4));
+      mostraSequenza();
+    }
+
+    function tap(p, el) {
+      if (!accettaInput) return;
+      accendi(p, el, 200);
+      if (p.id === seq[pos]) {
+        pos++;
+        if (pos === seq.length) {
+          accettaInput = false;
+          elMsg.textContent = "Perfetto! ✨";
+          timeouts.push(setTimeout(prossimoLivello, 900));
+        }
+      } else {
+        accettaInput = false;
+        App.beep(140, 0.4);
+        const raggiunto = livello - 1;
+        const isRecord = raggiunto > 0 && DB.submitScore("simon", "Sequenza luminosa", raggiunto, "high");
+        gameOverCard(container, {
+          emoji: raggiunto >= 8 ? "🧠" : "🎵",
+          titolo: "Sequenza interrotta!",
+          righe: [`Livelli completati: <strong>${raggiunto}</strong>`],
+          isRecord, replay: start,
+        });
+      }
+    }
+
+    btnGo.addEventListener("click", () => {
+      btnGo.remove();
+      prossimoLivello();
+    });
+  }
+
+  start();
+}
+
+/* ============================================================
+   5) CACCIA AI NUMERI (tabella di Schulte)
+   ============================================================ */
+function renderNumeri(container) {
+  const LIVELLI = [
+    { id: "4", nome: "4×4", n: 16, cols: 4 },
+    { id: "5", nome: "5×5", n: 25, cols: 5 },
+  ];
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Caccia ai numeri</h2>
+        <p style="color:var(--text-soft); margin-bottom:1rem">Tocca i numeri in ordine crescente, da 1 in su, il più in fretta possibile.<br>Consiglio pro: tieni lo sguardo al centro e usa la visione periferica.</p>
+        <div class="btn-row" style="justify-content:center">
+          ${LIVELLI.map(l => `<button class="btn btn-big" data-lvl="${l.id}">${l.nome}</button>`).join("")}
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
+  }
+
+  function start(lvl) {
+    const numeri = shuffle(Array.from({ length: lvl.n }, (_, i) => i + 1));
+    let atteso = 1, partito = null, dec = 0;
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Cerca: <span data-next>1</span></div>
+        <div class="hud-item">⏱ <span data-tempo>0.0s</span></div>
+      </div>
+      <div class="schulte-grid ${lvl.cols === 4 ? "cols-4" : ""}" data-grid></div>`;
+
+    const grid = container.querySelector("[data-grid]");
+    const elNext = container.querySelector("[data-next]");
+    const elTempo = container.querySelector("[data-tempo]");
+
+    const timer = setInterval(() => {
+      if (partito) {
+        dec = (performance.now() - partito) / 1000;
+        elTempo.textContent = `${dec.toFixed(1)}s`;
+      }
+    }, 100);
+    App.addCleanup(() => clearInterval(timer));
+
+    numeri.forEach(n => {
+      const b = document.createElement("button");
+      b.className = "schulte-cell";
+      b.textContent = n;
+      b.addEventListener("click", () => {
+        if (b.classList.contains("done")) return;
+        if (!partito) partito = performance.now();
+        if (n === atteso) {
+          b.classList.add("done");
+          App.beep(500 + n * 14, 0.04);
+          atteso++;
+          elNext.textContent = atteso;
+          if (atteso > lvl.n) {
+            clearInterval(timer);
+            const finale = Math.round(((performance.now() - partito) / 1000) * 10) / 10;
+            const isRecord = DB.submitScore(`numeri-${lvl.id}`, `Caccia ai numeri (${lvl.nome})`, finale, "low");
+            gameOverCard(container, {
+              emoji: "🔍", titolo: "Griglia completata!",
+              righe: [`Tempo: <strong>${finale.toFixed(1)}s</strong>`],
+              isRecord, replay: () => start(lvl),
+            });
+          }
+        } else {
+          b.classList.add("wrong");
+          App.beep(170, 0.1);
+          setTimeout(() => b.classList.remove("wrong"), 350);
+        }
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  menu();
+}
+
+/* ============================================================
+   6) FLUSSO (n-back)
+   ============================================================ */
+function renderFlusso(container) {
+  const SIMBOLI = ["🍎", "🌙", "⭐", "🐟", "🎩", "🔔"];
+  const TOTALE = 20;
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Flusso</h2>
+        <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
+          Scorre un flusso di simboli. Per ognuno rispondi:<br>
+          <strong>è uguale a quello di N posizioni fa?</strong><br>
+          Livello 1 = confronta col precedente. Livello 2 = con due fa (tosto!).
+        </p>
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn btn-big" data-n="1">Livello 1</button>
+          <button class="btn btn-big" data-n="2">Livello 2 🔥</button>
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-n]").forEach(b =>
+      b.addEventListener("click", () => start(Number(b.dataset.n))));
+  }
+
+  function start(n) {
+    // costruiamo la sequenza con ~40% di corrispondenze
+    const seq = [];
+    for (let i = 0; i < TOTALE + n; i++) {
+      if (i >= n && Math.random() < 0.4) seq.push(seq[i - n]);
+      else {
+        let s;
+        do { s = SIMBOLI[Math.floor(Math.random() * SIMBOLI.length)]; }
+        while (i >= n && s === seq[i - n] && Math.random() > 0.3);
+        seq.push(s);
+      }
+    }
+
+    let idx = 0, giuste = 0, sbagliate = 0, risposto = false;
+    let timeouts = [];
+    App.addCleanup(() => timeouts.forEach(clearTimeout));
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Simbolo: <span data-prog>0/${TOTALE}</span></div>
+        <div class="hud-item">✅ <span data-ok>0</span></div>
+        <div class="hud-item">❌ <span data-no>0</span></div>
+      </div>
+      <div class="card">
+        <div class="flow-stim" data-stim></div>
+        <div class="flow-btns">
+          <button class="btn btn-big btn-accent" data-si>✅ Uguale</button>
+          <button class="btn btn-big btn-warn" data-nope>❌ Diverso</button>
+        </div>
+        <p class="game-msg" data-msg style="margin-top:.8rem"></p>
+      </div>`;
+
+    const elStim = container.querySelector("[data-stim]");
+    const elProg = container.querySelector("[data-prog]");
+    const elOk = container.querySelector("[data-ok]");
+    const elNo = container.querySelector("[data-no]");
+    const elMsg = container.querySelector("[data-msg]");
+    const btnSi = container.querySelector("[data-si]");
+    const btnNo = container.querySelector("[data-nope]");
+
+    function setBtns(on) { btnSi.disabled = !on; btnNo.disabled = !on; }
+
+    function mostra() {
+      if (idx >= TOTALE + n) return fine();
+      elStim.textContent = seq[idx];
+      risposto = false;
+      const attivo = idx >= n; // i primi n simboli sono solo da memorizzare
+      setBtns(attivo);
+      elMsg.textContent = attivo ? "" : "Memorizza… 🧠";
+      elProg.textContent = `${Math.max(idx - n + 1, 0)}/${TOTALE}`;
+      timeouts.push(setTimeout(() => {
+        if (attivo && !risposto) {
+          sbagliate++; elNo.textContent = sbagliate;
+          elMsg.textContent = "Tempo scaduto! ⏰";
+        }
+        idx++;
+        mostra();
+      }, attivo ? 2600 : 1400));
+    }
+
+    function rispondi(dice) {
+      if (risposto || idx < n) return;
+      risposto = true;
+      setBtns(false);
+      const uguale = seq[idx] === seq[idx - n];
+      if (dice === uguale) {
+        giuste++; elOk.textContent = giuste;
+        elMsg.textContent = "Giusto! ✨"; App.beep(700, 0.06);
+      } else {
+        sbagliate++; elNo.textContent = sbagliate;
+        elMsg.textContent = "Ops! 😅"; App.beep(180, 0.1);
+      }
+    }
+
+    btnSi.addEventListener("click", () => rispondi(true));
+    btnNo.addEventListener("click", () => rispondi(false));
+
+    function fine() {
+      const isRecord = DB.submitScore(`flusso-${n}`, `Flusso (livello ${n})`, giuste, "high");
+      gameOverCard(container, {
+        emoji: giuste >= TOTALE * 0.8 ? "🧠" : "🌊",
+        titolo: "Flusso terminato!",
+        righe: [`Risposte giuste: <strong>${giuste}/${TOTALE}</strong>`],
+        isRecord, replay: () => start(n),
+      });
+    }
+
+    mostra();
+  }
+
+  menu();
+}

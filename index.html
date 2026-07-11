@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NeuroSpazio — giochi, strumenti e supporto per ADHD e altre neurodivergenze. Pomodoro, gestione attività, allenamento cognitivo, calma e molto altro.">
+  <meta name="theme-color" content="#6c5ce7">
+  <title>NeuroSpazio — giochi e strumenti per menti neurodivergenti</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#main">Vai al contenuto</a>
+
+  <header class="topbar">
+    <a href="#/home" class="logo" aria-label="NeuroSpazio, vai alla home">
+      <span class="logo-emoji" aria-hidden="true">🧠</span>
+      <span class="logo-text">Neuro<strong>Spazio</strong></span>
+    </a>
+    <nav class="mainnav" aria-label="Navigazione principale">
+      <a href="#/home" data-nav="home"><span aria-hidden="true">🏠</span><span>Home</span></a>
+      <a href="#/giochi" data-nav="giochi"><span aria-hidden="true">🎮</span><span>Giochi</span></a>
+      <a href="#/strumenti" data-nav="strumenti"><span aria-hidden="true">🧰</span><span>Strumenti</span></a>
+      <a href="#/risorse" data-nav="risorse"><span aria-hidden="true">📚</span><span>Risorse</span></a>
+      <a href="#/progressi" data-nav="progressi"><span aria-hidden="true">🏆</span><span>Progressi</span></a>
+      <a href="#/impostazioni" data-nav="impostazioni"><span aria-hidden="true">⚙️</span><span>Opzioni</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="main" tabindex="-1"></main>
+
+  <footer class="footer">
+    <p><strong>NeuroSpazio</strong> non sostituisce un parere medico. Se hai dubbi sulla tua salute, parlane con una persona professionista. 💜</p>
+  </footer>
+
+  <div id="toast-zone" class="toast-zone" aria-live="polite"></div>
+  <div id="confetti-zone" class="confetti-zone" aria-hidden="true"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/games.js"></script>
+  <script src="js/tools.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
