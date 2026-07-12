@@ -107,12 +107,62 @@ const App = (() => {
     if (s.groundingSessions >= 1) earn("primo-grounding");
     if (Object.keys(DB.state.moods).length >= 7) earn("umore-7");
     if (DB.state.habits.some(h => habitStreak(h) >= 7)) earn("abitudine-7");
+    const giorniPercorsi = Object.values(DB.state.percorsi || {});
+    if (giorniPercorsi.some(g => g.length >= 1)) earn("primo-giorno-percorso");
+    if (giorniPercorsi.some(g => g.length >= 7)) earn("percorso-completo");
   }
 
   function recordGamePlayed() {
     DB.state.stats.totalGames++;
-    DB.save();
+    DB.logEvento("gioco");
     checkBadges();
+  }
+
+  /* ---------- notifiche locali (facoltative, si attivano nelle Opzioni) ---------- */
+  function notify(titolo, corpo) {
+    if (!DB.state.settings.notifications) return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (!document.hidden) return; // se stai guardando l'app, bastano toast e suoni
+    try {
+      new Notification(titolo, { body: corpo, icon: "icons/icon-192.png" });
+    } catch (e) { /* notifiche non disponibili */ }
+  }
+
+  /* ---------- lettura ad alta voce (sintesi vocale del browser) ---------- */
+  let vocePreferita = null;
+  function trovaVoce() {
+    if (vocePreferita || !("speechSynthesis" in window)) return vocePreferita;
+    const voci = speechSynthesis.getVoices();
+    vocePreferita = voci.find(v => v.lang.startsWith("it")) || null;
+    return vocePreferita;
+  }
+  if ("speechSynthesis" in window) speechSynthesis.addEventListener("voiceschanged", trovaVoce);
+
+  function speak(testo, btn) {
+    if (!("speechSynthesis" in window)) { toast("Il tuo browser non supporta la lettura ad alta voce 😕"); return; }
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+      document.querySelectorAll(".tts-btn.leggendo").forEach(b => {
+        b.classList.remove("leggendo"); b.textContent = "🔊 Ascolta";
+      });
+      if (btn?.dataset.eraAttivo === "1") { delete btn.dataset.eraAttivo; return; }
+    }
+    const u = new SpeechSynthesisUtterance(testo);
+    u.lang = "it-IT";
+    const voce = trovaVoce();
+    if (voce) u.voice = voce;
+    u.rate = 0.95;
+    if (btn) {
+      btn.classList.add("leggendo");
+      btn.textContent = "⏹️ Ferma";
+      btn.dataset.eraAttivo = "1";
+      u.onend = u.onerror = () => {
+        btn.classList.remove("leggendo");
+        btn.textContent = "🔊 Ascolta";
+        delete btn.dataset.eraAttivo;
+      };
+    }
+    speechSynthesis.speak(u);
   }
 
   /* ---------- impostazioni ---------- */
@@ -214,6 +264,8 @@ const App = (() => {
           <a class="quick-btn" href="#/strumento/dump"><span class="q-emoji">🧺</span>Testa piena</a>
           <a class="quick-btn" href="#/strumento/respiro"><span class="q-emoji">🫁</span>Calmarmi</a>
           <a class="quick-btn" href="#/giochi"><span class="q-emoji">🎮</span>Giocare un po'</a>
+          <a class="quick-btn" href="#/percorsi"><span class="q-emoji">🎓</span>Un passo al giorno</a>
+          <a class="quick-btn" href="#/strumento/sos"><span class="q-emoji">🆘</span>Carta SOS</a>
         </div>
 
         <div class="today-summary">
@@ -221,6 +273,20 @@ const App = (() => {
           <div class="stat-box"><div class="stat-num">${s.totalPomodoros}</div><div class="stat-label">sessioni di focus</div></div>
           <div class="stat-box"><div class="stat-num">${s.totalGames}</div><div class="stat-label">partite giocate</div></div>
           <div class="stat-box"><div class="stat-num">${DB.state.badges.length}/${BADGES.length}</div><div class="stat-label">badge sbloccati</div></div>
+        </div>
+
+        <div class="home-section-title"><h2>🎓 Percorsi guidati</h2><a href="#/percorsi">Tutti i percorsi →</a></div>
+        <div class="grid grid-3">
+          ${PERCORSI.map(p => {
+            const fatti = (DB.state.percorsi[p.id] || []).length;
+            return `<a class="tile" href="#/percorso/${p.id}">
+              <span class="tile-emoji" aria-hidden="true">${p.emoji}</span>
+              <h3>${p.nome}</h3>
+              <p>${p.desc}</p>
+              <div class="percorso-progress"><div style="width:${(fatti / 7) * 100}%"></div></div>
+              <span class="tile-tag">${fatti}/7 giorni</span>
+            </a>`;
+          }).join("")}
         </div>
 
         <div class="home-section-title"><h2>🎮 Allena la mente</h2><a href="#/giochi">Tutti i giochi →</a></div>
@@ -315,7 +381,9 @@ const App = (() => {
         <div class="grid grid-2" style="margin-bottom:1.8rem">
           ${CONDIZIONI.map(c => `
             <article class="card res-card">
-              <h3><span aria-hidden="true">${c.emoji}</span> ${c.nome}</h3>
+              <h3><span aria-hidden="true">${c.emoji}</span> ${c.nome}
+                <button class="tts-btn btn-ghost" data-tts-cond="${c.id}" style="margin-left:auto">🔊 Ascolta</button>
+              </h3>
               <p style="color:var(--text-soft); font-size:.85rem; margin-bottom:.5rem"><em>${c.sottotitolo}</em></p>
               <p class="res-body">${c.descrizione}</p>
               <details class="res-details">
@@ -363,6 +431,12 @@ const App = (() => {
           </ol>
         </div>
       </div>`;
+
+    // lettura ad alta voce delle schede (per chi legge con fatica: Wood et al., 2018)
+    main.querySelectorAll("[data-tts-cond]").forEach(b => b.addEventListener("click", () => {
+      const c = CONDIZIONI.find(x => x.id === b.dataset.ttsCond);
+      if (c) speak(`${c.nome}. ${c.descrizione} Cose importanti da sapere: ${c.punti.join(". ")}. Strategie che aiutano: ${c.strategie.join(". ")}`, b);
+    }));
   }
 
   function viewProgressi() {
@@ -375,6 +449,19 @@ const App = (() => {
         <div class="page-head">
           <h1>🏆 I tuoi progressi</h1>
           <p>Ogni piccolo passo è registrato qui. Guarda quanta strada hai fatto — anche nei giorni in cui non sembrava.</p>
+          <div class="btn-row" style="margin-top:.6rem">
+            <a class="btn btn-soft" href="#/report">🖨️ Report per il professionista</a>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.6rem">
+          <h2 style="font-size:1.15rem; margin-bottom:.6rem">💡 I tuoi insight personali</h2>
+          <p style="color:var(--text-soft); font-size:.88rem; margin-bottom:.8rem">
+            Calcolati solo qui, sul tuo dispositivo, dai dati che registri usando l'app. L'auto-osservazione strutturata è una pratica con basi solide (Korotitsch & Nelson-Gray, 1999).
+          </p>
+          <ul class="insight-list">
+            ${calcolaInsights().map(i => `<li>${i}</li>`).join("")}
+          </ul>
         </div>
 
         <div class="today-summary" style="margin-bottom:1.6rem">
@@ -432,6 +519,235 @@ const App = (() => {
       </div>`;
   }
 
+  /* ---------- percorsi guidati ---------- */
+  function viewPercorsi() {
+    main.innerHTML = `
+      <div class="view">
+        <div class="page-head">
+          <h1>🎓 Percorsi guidati</h1>
+          <p>Sette giorni, un passo al giorno: una micro-lezione basata sulla ricerca (fonte inclusa) e un'azione concreta da fare subito. Niente maratone: la dose è pensata per cervelli veri.</p>
+        </div>
+        <div class="grid grid-2">
+          ${PERCORSI.map(p => {
+            const fatti = (DB.state.percorsi[p.id] || []).length;
+            return `
+            <a class="tile" href="#/percorso/${p.id}">
+              <span class="tile-emoji" aria-hidden="true">${p.emoji}</span>
+              <h3>${p.nome}</h3>
+              <p>${p.desc}</p>
+              <div class="percorso-progress"><div style="width:${(fatti / 7) * 100}%"></div></div>
+              <span class="tile-tag">${fatti === 7 ? "🏔️ Completato!" : `${fatti}/7 giorni`}</span>
+            </a>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }
+
+  function viewPercorso(id) {
+    const p = PERCORSI.find(x => x.id === id);
+    if (!p) return navigate("/percorsi");
+    if (!DB.state.percorsi[p.id]) DB.state.percorsi[p.id] = [];
+    const fatti = DB.state.percorsi[p.id];
+    const prossimo = p.giorni.findIndex((_, i) => !fatti.includes(i));
+
+    main.innerHTML = `
+      <div class="view game-shell" style="max-width:760px">
+        <a class="back-link" href="#/percorsi">← Tutti i percorsi</a>
+        <div class="page-head">
+          <h1>${p.emoji} ${p.nome}</h1>
+          <p>${p.desc}</p>
+        </div>
+        <div class="percorso-progress" style="margin-bottom:1.2rem"><div style="width:${(fatti.length / 7) * 100}%"></div></div>
+        ${p.giorni.map((g, i) => {
+          const done = fatti.includes(i);
+          const isNext = i === prossimo;
+          const fonte = FONTI.find(f => f.id === g.fonte);
+          return `
+          <details class="card giorno-card ${done ? "fatto" : ""} ${isNext ? "prossimo" : ""}" ${isNext ? "open" : ""}>
+            <summary>
+              <span class="giorno-num">${done ? "✅" : `Giorno ${i + 1}`}</span>
+              <span class="giorno-titolo">${g.t}</span>
+              ${isNext && !done ? `<span class="giorno-oggi">← oggi</span>` : ""}
+            </summary>
+            <div class="giorno-body">
+              <p>${g.testo}</p>
+              <div class="btn-row" style="margin:.8rem 0">
+                <a class="btn btn-soft" href="${g.azione.href}">👉 ${g.azione.label}</a>
+                <button class="btn tts-btn btn-ghost" data-tts="${i}">🔊 Ascolta</button>
+              </div>
+              ${fonte ? `<p class="giorno-fonte">📚 Fonte: ${fonte.testo}</p>` : ""}
+              <button class="btn ${done ? "btn-ghost" : "btn-accent"}" data-fatto="${i}">
+                ${done ? "↩️ Segna come da fare" : "✔️ Ho fatto il passo di oggi"}
+              </button>
+            </div>
+          </details>`;
+        }).join("")}
+      </div>`;
+
+    main.querySelectorAll("[data-fatto]").forEach(b => b.addEventListener("click", () => {
+      const i = Number(b.dataset.fatto);
+      const arr = DB.state.percorsi[p.id];
+      const pos = arr.indexOf(i);
+      if (pos >= 0) arr.splice(pos, 1);
+      else {
+        arr.push(i);
+        confetti(arr.length >= 7 ? 120 : 30);
+        toast(arr.length >= 7 ? "🏔️ PERCORSO COMPLETATO! Sei stato costante per 7 giorni." : `Giorno ${i + 1} fatto! A domani per il prossimo 🌱`);
+      }
+      DB.save();
+      checkBadges();
+      viewPercorso(id);
+    }));
+
+    main.querySelectorAll("[data-tts]").forEach(b => b.addEventListener("click", () => {
+      const g = p.giorni[Number(b.dataset.tts)];
+      speak(`${g.t}. ${g.testo}`, b);
+    }));
+  }
+
+  /* ---------- insight personali (calcolati solo sul tuo dispositivo) ---------- */
+  function calcolaInsights() {
+    const out = [];
+    const eventi = DB.state.eventi || [];
+    const focus = eventi.filter(e => e.k === "pomodoro" || e.k === "gioco");
+
+    if (focus.length >= 8) {
+      const fasce = { "mattina (6–12)": 0, "pomeriggio (12–18)": 0, "sera (18–24)": 0, "notte (0–6)": 0 };
+      focus.forEach(e => {
+        const h = new Date(e.t).getHours();
+        if (h >= 6 && h < 12) fasce["mattina (6–12)"]++;
+        else if (h >= 12 && h < 18) fasce["pomeriggio (12–18)"]++;
+        else if (h >= 18) fasce["sera (18–24)"]++;
+        else fasce["notte (0–6)"]++;
+      });
+      const top = Object.entries(fasce).sort((a, b) => b[1] - a[1])[0];
+      const perc = Math.round((top[1] / focus.length) * 100);
+      out.push(`🕐 Il <strong>${perc}%</strong> delle tue sessioni di focus e partite avviene di <strong>${top[0]}</strong>: quella sembra la tua fascia d'oro. Prova a metterci le cose importanti.`);
+    } else {
+      out.push(`🕐 Ancora pochi dati sulle tue fasce orarie (${focus.length} eventi registrati): continua a usare timer e giochi per una settimana e qui appariranno i tuoi momenti d'oro.`);
+    }
+
+    const moodKeys = Object.keys(DB.state.moods);
+    if (moodKeys.length >= 6) {
+      const ultimi7 = [], prec7 = [];
+      for (let i = 0; i < 14; i++) {
+        const m = DB.state.moods[DB.todayKey(-i)];
+        if (m) (i < 7 ? ultimi7 : prec7).push(m.value);
+      }
+      const media = a => a.reduce((x, y) => x + y, 0) / a.length;
+      if (ultimi7.length >= 3 && prec7.length >= 3) {
+        const diff = media(ultimi7) - media(prec7);
+        if (diff > 0.4) out.push(`📈 Il tuo umore medio negli ultimi 7 giorni è <strong>in salita</strong> rispetto alla settimana prima. Qualcosa sta funzionando: cosa?`);
+        else if (diff < -0.4) out.push(`📉 Il tuo umore medio è <strong>in calo</strong> rispetto alla settimana scorsa. Nessun giudizio — ma se continua, parlane con qualcuno di cui ti fidi.`);
+        else out.push(`⚖️ Il tuo umore è <strong>stabile</strong> tra le ultime due settimane.`);
+      }
+      const perGiorno = {};
+      moodKeys.forEach(k => {
+        const d = new Date(k + "T12:00:00");
+        const g = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"][d.getDay()];
+        (perGiorno[g] = perGiorno[g] || []).push(DB.state.moods[k].value);
+      });
+      const medie = Object.entries(perGiorno).filter(([, v]) => v.length >= 2)
+        .map(([g, v]) => [g, media(v)]).sort((a, b) => b[1] - a[1]);
+      if (medie.length >= 3) {
+        out.push(`🌤️ Il tuo giorno migliore finora è il <strong>${medie[0][0]}</strong>; il più faticoso il <strong>${medie[medie.length - 1][0]}</strong>. Puoi pianificare di conseguenza.`);
+      }
+    } else {
+      out.push(`🌤️ Registra l'umore per almeno 6 giorni e qui compariranno i tuoi schemi settimanali.`);
+    }
+
+    if (eventi.filter(e => e.k === "task").length >= 5 && moodKeys.length >= 4) {
+      const giorniConUmore = new Set(moodKeys);
+      const taskConUmore = eventi.filter(e => e.k === "task" && giorniConUmore.has(new Date(e.t).toISOString().slice(0, 10))).length;
+      const totTask = eventi.filter(e => e.k === "task").length;
+      if (taskConUmore / totTask > 0.6) {
+        out.push(`✅ La maggior parte delle attività le completi nei giorni in cui registri anche l'umore: ascoltarti e fare sembrano andare a braccetto.`);
+      }
+    }
+    return out;
+  }
+
+  /* ---------- report stampabile per il professionista ---------- */
+  function viewReport() {
+    const s = DB.state.stats;
+    const FACCE = ["", "😖", "😕", "😐", "🙂", "😄"];
+    const oggi = new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    const moodEntries = [];
+    for (let i = 13; i >= 0; i--) {
+      const k = DB.todayKey(-i);
+      const m = DB.state.moods[k];
+      const d = new Date(); d.setDate(d.getDate() - i);
+      moodEntries.push({ data: `${d.getDate()}/${d.getMonth() + 1}`, m });
+    }
+    const scores = Object.entries(s.bestScores);
+
+    main.innerHTML = `
+      <div class="view report-page" style="max-width:760px; margin:0 auto">
+        <a class="back-link no-print" href="#/progressi">← Ai progressi</a>
+        <div class="card">
+          <h1 style="font-size:1.5rem">🧠 NeuroSpazio — Report personale</h1>
+          <p style="color:var(--text-soft)">Generato il ${oggi} · dati auto-registrati dall'utente sul proprio dispositivo</p>
+          <hr style="border:none; border-top:1px solid var(--border); margin:1rem 0">
+
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Riepilogo dell'attività</h2>
+          <table class="score-table" style="margin-bottom:1.2rem">
+            <tbody>
+              <tr><td>Giorni consecutivi di utilizzo</td><td class="score-val">${s.visitStreak}</td></tr>
+              <tr><td>Sessioni di focus (pomodoro) completate</td><td class="score-val">${s.totalPomodoros}</td></tr>
+              <tr><td>Attività portate a termine</td><td class="score-val">${s.totalTasksDone}</td></tr>
+              <tr><td>Sessioni di respirazione / grounding</td><td class="score-val">${s.breathSessions} / ${s.groundingSessions}</td></tr>
+              <tr><td>Partite di allenamento cognitivo</td><td class="score-val">${s.totalGames}</td></tr>
+            </tbody>
+          </table>
+
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Umore auto-riferito (ultimi 14 giorni)</h2>
+          <table class="score-table" style="margin-bottom:1.2rem">
+            <thead><tr><th>Data</th><th>Umore (1–5)</th><th>Nota</th></tr></thead>
+            <tbody>
+              ${moodEntries.map(e => `<tr>
+                <td>${e.data}</td>
+                <td>${e.m ? `${e.m.value} ${FACCE[e.m.value]}` : "—"}</td>
+                <td>${e.m?.note ? escapeHTML(e.m.note) : ""}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+
+          ${DB.state.habits.length ? `
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Abitudini in corso</h2>
+          <table class="score-table" style="margin-bottom:1.2rem">
+            <thead><tr><th>Abitudine</th><th>Serie attuale</th></tr></thead>
+            <tbody>
+              ${DB.state.habits.map(h => `<tr><td>${escapeHTML(h.name)}</td><td class="score-val">${habitStreak(h)} giorni</td></tr>`).join("")}
+            </tbody>
+          </table>` : ""}
+
+          ${scores.length ? `
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Record nei giochi cognitivi</h2>
+          <table class="score-table" style="margin-bottom:1.2rem">
+            <tbody>
+              ${scores.map(([id, sc]) => `<tr><td>${sc.label}</td><td class="score-val">${sc.value}</td></tr>`).join("")}
+            </tbody>
+          </table>` : ""}
+
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Osservazioni automatiche</h2>
+          <ul style="padding-left:1.2rem; margin-bottom:1.2rem">
+            ${calcolaInsights().map(i => `<li style="margin-bottom:.4rem">${i}</li>`).join("")}
+          </ul>
+
+          <p style="font-size:.82rem; color:var(--text-soft)">
+            Nota metodologica: questo report raccoglie dati auto-registrati (self-monitoring), una pratica utile in valutazione e trattamento
+            (Korotitsch & Nelson-Gray, 1999, <em>Psychological Assessment</em>) ma soggetta ai limiti dell'auto-osservazione.
+            Non è uno strumento diagnostico: è pensato come base di conversazione con professionisti sanitari.
+          </p>
+        </div>
+        <div class="btn-row no-print" style="justify-content:center; margin-top:1rem">
+          <button class="btn btn-big" data-print>🖨️ Stampa o salva come PDF</button>
+        </div>
+      </div>`;
+
+    main.querySelector("[data-print]").addEventListener("click", () => window.print());
+  }
+
   function viewImpostazioni() {
     const st = DB.state.settings;
     main.innerHTML = `
@@ -479,6 +795,11 @@ const App = (() => {
             <div class="switch-desc">Feedback sonori nei giochi e negli strumenti</div></div>
             <button class="switch" data-sw="sounds" role="switch" aria-checked="${st.sounds}" aria-label="Suoni dell'app"></button>
           </div>
+          <div class="switch-row">
+            <div><div class="switch-label">Notifiche di fine timer</div>
+            <div class="switch-desc">Ti avvisa a fine pomodoro o passo di routine anche se stai guardando un'altra scheda</div></div>
+            <button class="switch" data-sw-notif role="switch" aria-checked="${st.notifications}" aria-label="Notifiche di fine timer"></button>
+          </div>
         </div>
 
         <div class="card">
@@ -509,6 +830,27 @@ const App = (() => {
       DB.save(); applySettings();
       b.setAttribute("aria-checked", st[k]);
     }));
+
+    const swNotif = main.querySelector("[data-sw-notif]");
+    swNotif.addEventListener("click", async () => {
+      if (!st.notifications) {
+        if (!("Notification" in window)) {
+          toast("Il tuo browser non supporta le notifiche 😕");
+          return;
+        }
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") {
+          toast("Permesso negato: puoi cambiarlo dalle impostazioni del browser.");
+          return;
+        }
+        st.notifications = true;
+        toast("🔔 Notifiche attive: ti avviso a fine timer.");
+      } else {
+        st.notifications = false;
+      }
+      DB.save();
+      swNotif.setAttribute("aria-checked", st.notifications);
+    });
 
     main.querySelector("[data-export]").addEventListener("click", () => {
       const blob = new Blob([DB.exportJSON()], { type: "application/json" });
@@ -556,7 +898,10 @@ const App = (() => {
     { re: /^\/strumenti$/, view: viewStrumenti, nav: "strumenti" },
     { re: /^\/strumento\/([\w-]+)$/, view: viewStrumento, nav: "strumenti" },
     { re: /^\/risorse$/, view: viewRisorse, nav: "risorse" },
+    { re: /^\/percorsi$/, view: viewPercorsi, nav: "risorse" },
+    { re: /^\/percorso\/([\w-]+)$/, view: viewPercorso, nav: "risorse" },
     { re: /^\/progressi$/, view: viewProgressi, nav: "progressi" },
+    { re: /^\/report$/, view: viewReport, nav: "progressi" },
     { re: /^\/impostazioni$/, view: viewImpostazioni, nav: "impostazioni" },
   ];
 
@@ -564,6 +909,7 @@ const App = (() => {
 
   function route() {
     runCleanups();
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
     document.title = "NeuroSpazio";
     const path = location.hash.slice(1) || "/home";
     const r = routes.find(x => x.re.test(path));
@@ -583,6 +929,10 @@ const App = (() => {
     DB.touchVisit();
     checkBadges();
     route();
+    // PWA: installabile e utilizzabile offline (solo su http/https, non nel bundle standalone)
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("sw.js").catch(() => { /* facoltativo */ });
+    }
     const s = DB.state.stats;
     if (s.visitStreak > 1) {
       setTimeout(() => toast(`🔥 ${s.visitStreak} giorni di fila! Bello rivederti.`), 800);
@@ -595,5 +945,6 @@ const App = (() => {
   return {
     addCleanup, beep, audioCtx, toast, confetti, escapeHTML,
     checkBadges, recordGamePlayed, habitStreak, navigate,
+    earn, notify, speak,
   };
 })();

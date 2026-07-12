@@ -53,6 +53,22 @@ const GAMES = [
     tag: "memoria",
     render: renderFlusso,
   },
+  {
+    id: "tempo",
+    emoji: "⏱️",
+    nome: "Un minuto esatto",
+    desc: "Quanto dura davvero un minuto? Misura la tua percezione del tempo.",
+    tag: "focus",
+    render: renderTempo,
+  },
+  {
+    id: "rotta",
+    emoji: "🔀",
+    nome: "Cambio di rotta",
+    desc: "La regola cambia all'improvviso: colore o forma? Allena la flessibilità mentale.",
+    tag: "focus",
+    render: renderRotta,
+  },
 ];
 
 /* ---------- utilità comuni ai giochi ---------- */
@@ -653,6 +669,212 @@ function renderFlusso(container) {
     }
 
     mostra();
+  }
+
+  menu();
+}
+
+/* ============================================================
+   7) UN MINUTO ESATTO (riproduzione temporale)
+   ============================================================ */
+function renderTempo(container) {
+  const DURATE = [10, 30, 60];
+  const ROUNDS = 3;
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Un minuto esatto</h2>
+        <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
+          Premi <strong>VIA</strong>, senti dentro di te passare il tempo richiesto,
+          poi premi <strong>FERMA</strong> quando pensi che sia trascorso.<br>
+          Niente orologi in vista, eh 😉 — 3 round, vince chi conosce il proprio orologio interno.
+        </p>
+        <div class="btn-row" style="justify-content:center">
+          ${DURATE.map(d => `<button class="btn btn-big" data-durata="${d}">${d} secondi</button>`).join("")}
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-durata]").forEach(b =>
+      b.addEventListener("click", () => start(Number(b.dataset.durata))));
+  }
+
+  function start(target) {
+    let round = 0;
+    const errori = [];
+    const risultati = [];
+
+    function schermataRound() {
+      container.innerHTML = `
+        <div class="game-hud">
+          <div class="hud-item">Obiettivo: <span>${target}s</span></div>
+          <div class="hud-item">Round: <span>${round + 1}/${ROUNDS}</span></div>
+        </div>
+        <div class="card" style="text-align:center; padding:2.5rem 1rem">
+          <p class="game-msg" data-msg>Quando sei pronto…</p>
+          <button class="btn btn-big" data-via style="font-size:1.5rem; padding:1.2rem 3rem">▶️ VIA</button>
+        </div>`;
+      const btn = container.querySelector("[data-via]");
+      const msg = container.querySelector("[data-msg]");
+      let partito = null;
+
+      btn.addEventListener("click", () => {
+        if (partito === null) {
+          partito = performance.now();
+          btn.textContent = "✋ FERMA";
+          btn.classList.add("btn-warn");
+          msg.textContent = `Senti passare ${target} secondi…`;
+          App.beep(520, 0.08);
+        } else {
+          const trascorsi = (performance.now() - partito) / 1000;
+          const err = Math.abs(trascorsi - target) / target * 100;
+          errori.push(err);
+          risultati.push(trascorsi);
+          App.beep(700, 0.1);
+          round++;
+          if (round >= ROUNDS) fine();
+          else feedback(trascorsi, err);
+        }
+      });
+    }
+
+    function feedback(trascorsi, err) {
+      const direzione = trascorsi < target
+        ? "il tuo orologio interno corre veloce ⏩"
+        : "il tuo orologio interno va con calma ⏪";
+      container.innerHTML = `
+        <div class="card" style="text-align:center; padding:2rem 1rem">
+          <p class="result-line">Hai fermato a <strong>${trascorsi.toFixed(1)}s</strong> su ${target}s</p>
+          <p class="result-line">Errore: <strong>${err.toFixed(0)}%</strong> — ${direzione}</p>
+          <button class="btn btn-big" data-next style="margin-top:1rem">Round ${round + 1} →</button>
+        </div>`;
+      container.querySelector("[data-next]").addEventListener("click", schermataRound);
+    }
+
+    function fine() {
+      const media = Math.round(errori.reduce((a, b) => a + b, 0) / errori.length * 10) / 10;
+      const isRecord = DB.submitScore(`tempo-${target}`, `Un minuto esatto (${target}s)`, media, "low");
+      if (media < 10) App.earn("signore-tempo");
+      const tendenza = risultati.filter(r => r < target).length >= 2
+        ? "Tendi ad anticipare: per te il tempo scorre più in fretta di quanto sembri. I timer esterni sono i tuoi migliori amici."
+        : "Tendi a dilatare: gli intervalli ti sembrano più corti del reale. Occhio alle pause che si allungano!";
+      gameOverCard(container, {
+        emoji: media < 10 ? "🧙" : "⏱️",
+        titolo: media < 10 ? "Orologio interno svizzero!" : "Ora conosci il tuo tempo!",
+        righe: [
+          `Errore medio: <strong>${media}%</strong>`,
+          `<span style="font-size:.95rem; color:var(--text-soft)">${tendenza}</span>`,
+        ],
+        isRecord, replay: () => start(target),
+      });
+    }
+
+    schermataRound();
+  }
+
+  menu();
+}
+
+/* ============================================================
+   8) CAMBIO DI ROTTA (task switching)
+   ============================================================ */
+function renderRotta(container) {
+  const DURATA = 45;
+  const FORME = ["cerchio", "quadrato"];
+  const COLORI_R = ["rosso", "blu"];
+  const EMOJI = { "rosso-cerchio": "🔴", "blu-cerchio": "🔵", "rosso-quadrato": "🟥", "blu-quadrato": "🟦" };
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Cambio di rotta</h2>
+        <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
+          Vedrai una figura. In alto c'è la <strong>regola del momento</strong>:<br>
+          se dice <strong>COLORE</strong>, rispondi al colore. Se dice <strong>FORMA</strong>, rispondi alla forma.<br>
+          La regola cambia senza preavviso: resta elastico! Hai ${DURATA} secondi.
+        </p>
+        <button class="btn btn-big" data-start>▶️ Inizia</button>
+      </div>`;
+    container.querySelector("[data-start]").addEventListener("click", start);
+  }
+
+  function start() {
+    let punti = 0, errori = 0, resta = DURATA;
+    let regola = "colore", daUltimoCambio = 0, corrente = null;
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">✅ <span data-ok>0</span></div>
+        <div class="hud-item">❌ <span data-no>0</span></div>
+        <div class="hud-item">⏱ <span data-tempo>${DURATA}s</span></div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="rotta-regola" data-regola>🎯 Regola: COLORE</div>
+        <div class="flow-stim" data-stim></div>
+        <div class="flow-btns" data-btns></div>
+      </div>`;
+
+    const elRegola = container.querySelector("[data-regola]");
+    const elStim = container.querySelector("[data-stim]");
+    const elBtns = container.querySelector("[data-btns]");
+    const elOk = container.querySelector("[data-ok]");
+    const elNo = container.querySelector("[data-no]");
+    const elTempo = container.querySelector("[data-tempo]");
+
+    function disegnaBottoni() {
+      const opzioni = regola === "colore"
+        ? [["rosso", "🔴 ROSSO"], ["blu", "🔵 BLU"]]
+        : [["cerchio", "⚪ CERCHIO"], ["quadrato", "⬜ QUADRATO"]];
+      elBtns.innerHTML = opzioni.map(([v, label]) =>
+        `<button class="btn btn-big btn-soft" data-risposta="${v}">${label}</button>`).join("");
+      elBtns.querySelectorAll("[data-risposta]").forEach(b =>
+        b.addEventListener("click", () => rispondi(b.dataset.risposta)));
+    }
+
+    function prossima() {
+      daUltimoCambio++;
+      // dopo almeno 2 prove, la regola può cambiare (25% di probabilità)
+      if (daUltimoCambio >= 2 && Math.random() < 0.25) {
+        regola = regola === "colore" ? "forma" : "colore";
+        daUltimoCambio = 0;
+        elRegola.textContent = `🎯 Regola: ${regola.toUpperCase()}`;
+        elRegola.classList.add("cambiata");
+        setTimeout(() => elRegola.classList.remove("cambiata"), 500);
+        App.beep(940, 0.1);
+        disegnaBottoni();
+      }
+      corrente = {
+        colore: COLORI_R[Math.floor(Math.random() * 2)],
+        forma: FORME[Math.floor(Math.random() * 2)],
+      };
+      elStim.textContent = EMOJI[`${corrente.colore}-${corrente.forma}`];
+    }
+
+    function rispondi(v) {
+      if (!corrente) return;
+      const giusta = regola === "colore" ? corrente.colore : corrente.forma;
+      if (v === giusta) { punti++; elOk.textContent = punti; App.beep(700, 0.05); }
+      else { errori++; elNo.textContent = errori; App.beep(180, 0.12); }
+      prossima();
+    }
+
+    const timer = setInterval(() => {
+      resta--;
+      elTempo.textContent = `${resta}s`;
+      if (resta <= 0) {
+        clearInterval(timer);
+        const isRecord = DB.submitScore("rotta", "Cambio di rotta", punti, "high");
+        gameOverCard(container, {
+          emoji: punti >= 25 ? "🤸" : "🔀",
+          titolo: "Tempo scaduto!",
+          righe: [`Risposte giuste: <strong>${punti}</strong>`, `Errori: <strong>${errori}</strong>`],
+          isRecord, replay: start,
+        });
+      }
+    }, 1000);
+    App.addCleanup(() => clearInterval(timer));
+
+    disegnaBottoni();
+    prossima();
   }
 
   menu();

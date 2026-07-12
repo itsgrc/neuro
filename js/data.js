@@ -279,6 +279,9 @@ const BADGES = [
   { id: "primo-grounding", emoji: "🌍", nome: "Con i piedi a terra", desc: "Primo esercizio 5-4-3-2-1" },
   { id: "umore-7", emoji: "📈", nome: "Mi conosco", desc: "Umore registrato per 7 giorni" },
   { id: "abitudine-7", emoji: "💪", nome: "Abitudine di ferro", desc: "Un'abitudine mantenuta 7 giorni di fila" },
+  { id: "primo-giorno-percorso", emoji: "🎓", nome: "In cammino", desc: "Primo giorno di un percorso completato" },
+  { id: "percorso-completo", emoji: "🏔️", nome: "Vetta raggiunta", desc: "Un percorso di 7 giorni completato" },
+  { id: "signore-tempo", emoji: "⏱️", nome: "Signore del tempo", desc: "Errore medio sotto il 10% in Un minuto esatto" },
 ];
 
 /* ============================================================
@@ -329,13 +332,25 @@ const FONTI = [
   { id: "gathercole2008", testo: "Gathercole, S. E., & Alloway, T. P. (2008). <em>Working Memory and Learning: A Practical Guide for Teachers</em>. Sage." },
   { id: "cirillo2018",    testo: "Cirillo, F. (2018). <em>The Pomodoro Technique: The Life-Changing Time-Management System</em>. Virgin Books." },
   { id: "legge170",       testo: "Legge 8 ottobre 2010, n. 170 — “Nuove norme in materia di disturbi specifici di apprendimento in ambito scolastico” (Italia)." },
+  { id: "toplak2006",     testo: "Toplak, M. E., Dockstader, C., & Tannock, R. (2006). Temporal information processing in ADHD: Findings to date and new methods. <em>Journal of Neuroscience Methods</em>, 151(1), 15–29." },
+  { id: "noreika2013",    testo: "Noreika, V., Falter, C. M., & Rubia, K. (2013). Timing deficits in attention-deficit/hyperactivity disorder (ADHD): Evidence from neurocognitive and neuroimaging studies. <em>Neuropsychologia</em>, 51(2), 235–266." },
+  { id: "miyake2000",     testo: "Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., & Wager, T. D. (2000). The unity and diversity of executive functions and their contributions to complex “frontal lobe” tasks: A latent variable analysis. <em>Cognitive Psychology</em>, 41(1), 49–100." },
+  { id: "monsell2003",    testo: "Monsell, S. (2003). Task switching. <em>Trends in Cognitive Sciences</em>, 7(3), 134–140." },
+  { id: "beukelman2013",  testo: "Beukelman, D. R., & Mirenda, P. (2013). <em>Augmentative and Alternative Communication: Supporting Children and Adults with Complex Communication Needs</em> (4ª ed.). Paul H. Brookes." },
+  { id: "cortese2009",    testo: "Cortese, S., Faraone, S. V., Konofal, E., & Lecendreux, M. (2009). Sleep in children with attention-deficit/hyperactivity disorder: Meta-analysis of subjective and objective studies. <em>Journal of the American Academy of Child & Adolescent Psychiatry</em>, 48(9), 894–908." },
+  { id: "irish2015",      testo: "Irish, L. A., Kline, C. E., Gunn, H. E., Buysse, D. J., & Hall, M. H. (2015). The role of sleep hygiene in promoting public health: A review of empirical evidence. <em>Sleep Medicine Reviews</em>, 22, 23–36." },
+  { id: "korotitsch1999", testo: "Korotitsch, W. J., & Nelson-Gray, R. O. (1999). An overview of self-monitoring research in assessment and treatment. <em>Psychological Assessment</em>, 11(4), 415–425." },
+  { id: "emmons2003",     testo: "Emmons, R. A., & McCullough, M. E. (2003). Counting blessings versus burdens: An experimental investigation of gratitude and subjective well-being in daily life. <em>Journal of Personality and Social Psychology</em>, 84(2), 377–389." },
+  { id: "gross1998",      testo: "Gross, J. J. (1998). The emerging field of emotion regulation: An integrative review. <em>Review of General Psychology</em>, 2(3), 271–299." },
+  { id: "wood2018",       testo: "Wood, S. G., Moxley, J. H., Tighe, E. L., & Wagner, R. K. (2018). Does use of text-to-speech and related read-aloud tools improve reading comprehension for students with reading disabilities? A meta-analysis. <em>Journal of Learning Disabilities</em>, 51(1), 73–84." },
+  { id: "denheijer2017",  testo: "Den Heijer, A. E., et al. (2017). Sweat it out? The effects of physical exercise on cognition and behavior in children and adults with ADHD: A systematic literature review. <em>Journal of Neural Transmission</em>, 124(S1), 3–26." },
 ];
 
 /* Fonti principali per ogni scheda della sezione Risorse */
 const FONTI_CONDIZIONI = {
   "adhd":         ["faraone2021", "barkley1997", "volkow2009", "shaw2014"],
   "autismo":      ["lord2018", "hull2017", "kapp2019", "mesibov2005"],
-  "dislessia":    ["peterson2012", "legge170"],
+  "dislessia":    ["peterson2012", "wood2018", "legge170"],
   "discalculia":  ["butterworth2011", "legge170"],
   "disgrafia":    ["legge170", "gathercole2008"],
   "tourette":     ["piacentini2010"],
@@ -430,7 +445,180 @@ const SCHEDE_SCIENZA = {
     perche: "Il 5-4-3-2-1 àncora l'attenzione ai cinque sensi, interrompendo la spirale di ansia, ruminazione o sovraccarico sensoriale: è una tecnica di grounding standard nella clinica dell'ansia e del trauma (Najavits, 2002). Non ti chiede di calmarti — solo di notare ciò che c'è. Il corpo fa il resto.",
     fonti: ["najavits2002", "zaccaro2018"],
   },
+  tempo: {
+    nd: ["adhd"],
+    perche: "La “cecità al tempo” non è un modo di dire: la ricerca documenta nell'ADHD differenze misurabili nel percepire, stimare e riprodurre gli intervalli di tempo (Noreika et al., 2013; Toplak et al., 2006). Questo gioco usa il paradigma di riproduzione temporale dei laboratori: scopri di quanto — e in che direzione — sbaglia il tuo orologio interno. Conoscere il proprio errore sistematico è il primo passo per compensarlo con timer e allarmi (Barkley, 1997).",
+    fonti: ["noreika2013", "toplak2006", "barkley1997"],
+  },
+  rotta: {
+    nd: ["adhd", "autismo"],
+    perche: "Passare da un compito all'altro ha un costo cognitivo misurabile, lo “switch cost” (Monsell, 2003). La flessibilità cognitiva è una delle tre funzioni esecutive fondamentali (Miyake et al., 2000) e può essere faticosa sia nell'ADHD sia nell'autismo, dove i cambi di contesto improvvisi pesano di più. Qui alleni il cambio di regola in un ambiente sicuro, dove sbagliare fa solo +1 sul contatore.",
+    fonti: ["miyake2000", "monsell2003"],
+  },
+  sos: {
+    nd: ["autismo", "ansia"],
+    perche: "Durante uno shutdown o un sovraccarico, il canale verbale può chiudersi davvero: non è capriccio, è neurologia (Lord et al., 2018). Preparare in anticipo un messaggio e dei bisogni da indicare è un principio base della Comunicazione Aumentativa e Alternativa (Beukelman & Mirenda, 2013): quando le parole non escono, la carta parla per te.",
+    fonti: ["beukelman2013", "lord2018"],
+  },
 };
+
+/* ============================================================
+   Percorsi guidati: 7 giorni, un passo al giorno.
+   Ogni giorno = una micro-lezione + un'azione concreta + la fonte.
+   ============================================================ */
+
+const PERCORSI = [
+  {
+    id: "adhd7",
+    emoji: "⚡",
+    nome: "Conosci il tuo ADHD",
+    desc: "7 giorni per capire come funziona il tuo motore — e smettere di dartene la colpa.",
+    giorni: [
+      {
+        t: "Non è pigrizia",
+        testo: "L'ADHD è una differenza neurobiologica nei circuiti di attenzione, ricompensa e autoregolazione — non un difetto di carattere. Il più grande consenso scientifico mai pubblicato sul tema (208 conclusioni basate su evidenze) lo dice chiaramente: nessuno “se lo inventa”, e non dipende da scarsa volontà. Oggi inizia da qui: il problema non sei tu, è l'attrito tra il tuo cervello e ambienti progettati per cervelli diversi dal tuo.",
+        azione: { label: "Leggi la scheda ADHD nelle Risorse", href: "#/risorse" },
+        fonte: "faraone2021",
+      },
+      {
+        t: "Il motore a interesse",
+        testo: "Il sistema dopaminergico ADHD risponde poco ai premi lontani e molto a interesse, novità, urgenza e sfida. Ecco perché riesci a fare per ore ciò che ti appassiona (iperfocus) e non riesci a iniziare ciò che è “importante ma noioso”. Non è incoerenza: è il tuo carburante. La strategia non è forzare la noia, ma agganciare le cose noiose a qualcosa che accende: musica, gara contro il timer, compagnia.",
+        azione: { label: "Scrivi in Svuota la mente 3 attività che ti mandano in iperfocus", href: "#/strumento/dump" },
+        fonte: "volkow2009",
+      },
+      {
+        t: "Il tempo invisibile",
+        testo: "La ricerca documenta nell'ADHD vere differenze nel percepire e riprodurre il tempo: gli intervalli si accorciano o si allungano rispetto all'orologio reale. Le conseguenze le conosci: ritardi cronici, “ancora 5 minuti” che diventano un'ora, panico da scadenza. Il rimedio non è impegnarsi di più, è rendere il tempo visibile: timer, allarmi, orologi analogici in vista.",
+        azione: { label: "Misura il tuo orologio interno con Un minuto esatto", href: "#/gioco/tempo" },
+        fonte: "noreika2013",
+      },
+      {
+        t: "La RAM esterna",
+        testo: "La memoria di lavoro — il taccuino mentale dove tieni le cose mentre le usi — è in media più piccola nell'ADHD. Per questo entri in una stanza e dimentichi perché, o perdi il filo a metà frase. La soluzione degli esperti è unanime: esternalizzare. Liste, promemoria, oggetti messi sulla porta. Non è barare: è dare al cervello la RAM aggiuntiva che merita.",
+        azione: { label: "Metti 3 promemoria fisici per le cose che dimentichi sempre", href: "#/strumento/dump" },
+        fonte: "martinussen2005",
+      },
+      {
+        t: "Dopamina buona",
+        testo: "Le abitudini si formano ripetendo un gesto nello stesso contesto — in media 66 giorni, e saltare un giorno non azzera nulla. Per un cervello ADHD la chiave è la ricompensa immediata: la spunta, la serie che cresce, il piccolo premio subito dopo. Inizia ridicolmente in piccolo: un bicchiere d'acqua, due minuti di riordino. La costanza nasce dalla facilità, non dallo sforzo.",
+        azione: { label: "Crea una micro-abitudine con premio immediato", href: "#/strumento/abitudini" },
+        fonte: "lally2010",
+      },
+      {
+        t: "Il corpo nel gioco",
+        testo: "L'esercizio fisico è tra gli interventi non farmacologici più studiati per l'ADHD: le revisioni sistematiche mostrano effetti positivi su attenzione, funzioni esecutive e umore. Non serve la maratona: camminare ascoltando musica, ballare in cucina, salire le scale. Il movimento è per il cervello ADHD ciò che il caffè è per gli altri — solo che funziona meglio.",
+        azione: { label: "Oggi: 10 minuti di movimento, come preferisci. Poi segna l'umore", href: "#/strumento/umore" },
+        fonte: "denheijer2017",
+      },
+      {
+        t: "Il tuo manuale personale",
+        testo: "Le emozioni intense — inclusa la fitta dolorosa davanti a un rifiuto percepito — sono parte integrante dell'ADHD, non un difetto aggiuntivo. Oggi chiudi il percorso costruendo il tuo manuale: quali strategie di questa settimana hanno funzionato per te? Scrivile. Sei l'esperto mondiale del tuo cervello: da oggi hai anche la documentazione.",
+        azione: { label: "Stampa il tuo report e scrivi le 3 strategie da tenere", href: "#/report" },
+        fonte: "shaw2014",
+      },
+    ],
+  },
+  {
+    id: "sonno7",
+    emoji: "😴",
+    nome: "Dormire, missione possibile",
+    desc: "7 giorni per fare pace con la notte, senza prediche sull'igiene del sonno.",
+    giorni: [
+      {
+        t: "Non sei tu che “non vuoi” dormire",
+        testo: "La meta-analisi degli studi sul sonno nell'ADHD è chiara: più difficoltà ad addormentarsi, più risvegli, più resistenza all'ora di andare a letto — anche a livello oggettivo, misurato in laboratorio. Il primo passo è togliere la colpa: il tuo rapporto difficile col sonno ha basi neurobiologiche. Il secondo è raccogliere dati: da stasera, annota solo a che ora spegni la luce.",
+        azione: { label: "Annota stasera l'ora in Svuota la mente", href: "#/strumento/dump" },
+        fonte: "cortese2009",
+      },
+      {
+        t: "La vendetta di mezzanotte",
+        testo: "Quella voglia di restare svegli fino a tardi “per avere finalmente tempo per te” ha perfino un nome: procrastinazione vendicativa dell'ora di dormire. Il trucco non è resistere, è togliere il motivo: programma 30 minuti di tempo VERAMENTE tuo prima di sera — non ritagli, tempo protetto. Se il tempo per te esiste di giorno, la notte smette di essere l'unico rifugio.",
+        azione: { label: "Pianifica ora i tuoi 30 minuti di domani", href: "#/strumento/attivita" },
+        fonte: "irish2015",
+      },
+      {
+        t: "L'allarme al contrario",
+        testo: "Il cervello ADHD non sente il tempo passare: alle 23:00 “è ancora presto” fino a quando sono le 2:00. La soluzione è banale e potentissima: una sveglia che suona per INIZIARE la sera, non per svegliarti. Quando suona, non devi dormire: devi solo iniziare la rampa di discesa. È il timer esterno che sostituisce l'orologio interno che non suona mai.",
+        azione: { label: "Imposta ora sul telefono la sveglia “inizio nanna”", href: "#/strumento/routine" },
+        fonte: "barkley1997",
+      },
+      {
+        t: "La rampa di discesa",
+        testo: "Il cervello non ha un interruttore on/off: ha bisogno di una rampa. Le revisioni sull'igiene del sonno confermano l'efficacia di routine regolari pre-sonno. Costruiscine una TUA di 3 passi, piacevole (non “lavati i denti”: quello è ovvio) — ad esempio: tisana, pigiama comodo, 10 pagine di un libro leggero. Sempre gli stessi passi, sempre nello stesso ordine: diventano il segnale condizionato del sonno.",
+        azione: { label: "Crea la tua routine della sera (3 passi)", href: "#/strumento/routine" },
+        fonte: "irish2015",
+      },
+      {
+        t: "Scarica la testa",
+        testo: "Ti sdrai e il cervello parte: cose da fare, figuracce del 2019, idee geniali. La tecnica del “rinvio programmato delle preoccupazioni” è validata da decenni: scrivi tutto su carta PRIMA di sdraiarti, con l'impegno esplicito di occupartene domani a un'ora precisa. La mente lascia andare ciò che sa essere al sicuro da qualche parte.",
+        azione: { label: "Stasera, 5 minuti di Svuota la mente prima del letto", href: "#/strumento/dump" },
+        fonte: "borkovec1983",
+      },
+      {
+        t: "Il freno di emergenza",
+        testo: "Se il corpo è attivato, la mente non scende. La respirazione lenta (circa 6 respiri al minuto) attiva il sistema parasimpatico — il freno fisiologico — ed è documentata da revisioni sistematiche. Il 4-7-8 è perfetto da letto: inspira 4, trattieni 7, espira 8. L'espirazione lunga è il segnale di sicurezza più antico che il tuo sistema nervoso conosca.",
+        azione: { label: "Stasera: 4 cicli di respirazione 4-7-8 a letto", href: "#/strumento/respiro" },
+        fonte: "zaccaro2018",
+      },
+      {
+        t: "Il bilancio del dormiglione",
+        testo: "Ultima sera: guarda la settimana. Cosa ha funzionato anche solo un po'? La sveglia della sera? Lo scarico dei pensieri? Tienine due, lascia il resto. E ricorda la regola che batte tutti i trucchi: orari costanti, anche nel weekend. Non per moralismo — perché il tuo ritmo circadiano è un'orchestra che suona bene solo con un direttore prevedibile.",
+        azione: { label: "Scrivi le 2 cose da tenere nella routine della sera", href: "#/strumento/dump" },
+        fonte: "irish2015",
+      },
+    ],
+  },
+  {
+    id: "emozioni7",
+    emoji: "🌊",
+    nome: "Emozioni: dalla piena alla mappa",
+    desc: "7 giorni per conoscere le tue onde emotive e costruire la tua cassetta degli attrezzi.",
+    giorni: [
+      {
+        t: "Il volume è più alto, davvero",
+        testo: "Se le tue emozioni sembrano sempre “troppo”, non è una tua impressione: la disregolazione emotiva è parte integrante del quadro ADHD (e di molte altre neurodivergenze), documentata da revisioni su American Journal of Psychiatry. Le emozioni arrivano più in fretta, più forti, e ci mettono di più ad andarsene. Primo passo, come sempre: osservare senza giudicare. Da oggi, registra l'umore ogni giorno.",
+        azione: { label: "Registra come stai adesso", href: "#/strumento/umore" },
+        fonte: "shaw2014",
+      },
+      {
+        t: "Dagli un nome (preciso)",
+        testo: "Mettere le emozioni in parole non è un gesto simbolico: negli studi di neuroimaging, l'“affect labeling” riduce l'attivazione dell'amigdala, il centro dell'allarme. Ma funziona meglio con parole precise: non “sto male” — deluso? invidioso? stanco? umiliato? in ansia? Più preciso è il nome, più il cervello passa dalla sirena antincendio alla mappa dell'incendio.",
+        azione: { label: "Oggi registra l'umore CON una parola precisa nella nota", href: "#/strumento/umore" },
+        fonte: "lieberman2007",
+      },
+      {
+        t: "Prima il corpo, poi la mente",
+        testo: "Quando l'onda è alta, ragionare non funziona: il corpo comanda. La strada più rapida per abbassare l'attivazione fisiologica è la respirazione lenta, i cui effetti su stress e stato emotivo sono documentati da revisioni sistematiche. Non devi “calmarti” (ordine impossibile): devi solo allungare l'espirazione per 2 minuti. Il resto lo fa la fisiologia.",
+        azione: { label: "Fai 3 cicli di respirazione, adesso che sei calmo: è allenamento", href: "#/strumento/respiro" },
+        fonte: "zaccaro2018",
+      },
+      {
+        t: "L'onda passa (sempre)",
+        testo: "Le emozioni sono onde: salgono, hanno un picco, scendono. Sempre. Durante il picco il compito non è risolvere, è restare ancorato finché scende: il grounding 5-4-3-2-1 usa i cinque sensi come ancora, ed è tecnica standard nella clinica dell'ansia e del trauma. Provalo oggi da calmo, così al prossimo picco il corpo saprà già la strada.",
+        azione: { label: "Prova il 5-4-3-2-1 adesso", href: "#/strumento/grounding" },
+        fonte: "najavits2002",
+      },
+      {
+        t: "Quando il rifiuto brucia",
+        testo: "Una critica leggera che ti devasta, un messaggio senza risposta che diventa un processo: la sensibilità estrema al rifiuto è comune nell'ADHD e ha basi nella disregolazione emotiva documentata dalla ricerca. Il antidoto quotidiano è l'autocompassione concreta: parlarti come parleresti al tuo migliore amico nella stessa situazione. Non è indulgenza: è accuratezza — tu meriti la stessa gentilezza.",
+        azione: { label: "Scrivi a te stesso 3 righe da migliore amico", href: "#/strumento/dump" },
+        fonte: "shaw2014",
+      },
+      {
+        t: "Tre cose buone",
+        testo: "L'attenzione neurodivergente si aggancia al negativo con l'iperfocus. L'esercizio della gratitudine — annotare regolarmente cose buone concrete — ha mostrato in studi sperimentali effetti misurabili sul benessere. Non serve fingere che vada tutto bene: serve dare al positivo lo stesso tempo di schermo che dai al negativo. Tre cose, anche piccole: il caffè buono, un messaggio carino, il sole.",
+        azione: { label: "Scrivi le 3 cose buone di oggi", href: "#/strumento/dump" },
+        fonte: "emmons2003",
+      },
+      {
+        t: "La tua cassetta degli attrezzi",
+        testo: "La ricerca sulla regolazione emotiva distingue le strategie che agiscono PRIMA (scegliere le situazioni, prepararsi, reinterpretare) da quelle che agiscono DOPO (sopprimere — la meno efficace e la più costosa). Oggi scrivi il tuo “piano piena”: quali sono i tuoi primi segnali d'onda? Quale strumento usi per ciascuno? Un piano scritto da calmo vale oro quando sei nel picco.",
+        azione: { label: "Scrivi il tuo piano piena e salvalo", href: "#/strumento/dump" },
+        fonte: "gross1998",
+      },
+    ],
+  },
+];
 
 const NOTA_SCIENZA = {
   titolo: "La scienza, con onestà",

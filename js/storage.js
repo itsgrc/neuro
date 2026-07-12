@@ -14,6 +14,7 @@ const DB = (() => {
       reduceMotion: false,
       fontScale: 1,
       sounds: true,
+      notifications: false,   // notifiche locali di fine timer
     },
     stats: {
       totalGames: 0,
@@ -33,6 +34,12 @@ const DB = (() => {
     routines: [],             // { id, name, steps: [{ name, minutes }] }
     decisions: [],            // opzioni salvate della ruota
     pomodoro: { work: 25, pause: 5, goal: 4 },
+    eventi: [],               // registro locale { t, k: "pomodoro"|"gioco"|"task" } per gli insight
+    percorsi: {},             // { idPercorso: [indici dei giorni completati] }
+    sos: {                    // carta di comunicazione per i momenti difficili
+      msg: "Sto attraversando un momento difficile. Non riesco a parlare, adesso. Non è colpa tua.",
+      needs: ["silenzio", "tempo"],
+    },
   });
 
   let state;
@@ -47,6 +54,7 @@ const DB = (() => {
         state.settings = Object.assign(defaults().settings, saved.settings || {});
         state.stats = Object.assign(defaults().stats, saved.stats || {});
         state.pomodoro = Object.assign(defaults().pomodoro, saved.pomodoro || {});
+        state.sos = Object.assign(defaults().sos, saved.sos || {});
       } else {
         state = defaults();
       }
@@ -106,6 +114,13 @@ const DB = (() => {
     save();
   }
 
+  // --- registro eventi (solo locale, per gli insight personali) ---
+  function logEvento(k) {
+    state.eventi.push({ t: Date.now(), k });
+    if (state.eventi.length > 600) state.eventi.splice(0, state.eventi.length - 600);
+    save();
+  }
+
   // --- record dei giochi ---
   // better: "high" (più alto è meglio) | "low" (più basso è meglio)
   function submitScore(gameId, label, value, better) {
@@ -119,7 +134,7 @@ const DB = (() => {
     return isRecord;
   }
 
-  return { load, save, reset, exportJSON, importJSON, todayKey, uid, touchVisit, submitScore,
+  return { load, save, reset, exportJSON, importJSON, todayKey, uid, touchVisit, submitScore, logEvento,
     get state() { return state; } };
 })();
 

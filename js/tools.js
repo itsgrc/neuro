@@ -14,6 +14,7 @@ const TOOLS = [
   { id: "suoni",     emoji: "🎧", nome: "Suoni per il focus",  tag: "focus",          desc: "Rumore bianco, rosa e marrone per coprire le distrazioni.", render: renderSuoni },
   { id: "respiro",   emoji: "🫁", nome: "Respira con me",      tag: "calma",          desc: "Respirazione guidata e animata per calmare corpo e mente.", render: renderRespiro },
   { id: "grounding", emoji: "🌍", nome: "SOS sovraccarico",    tag: "calma",          desc: "L'esercizio 5-4-3-2-1 per tornare al presente quando è troppo.", render: renderGrounding },
+  { id: "sos",       emoji: "🆘", nome: "Carta SOS",           tag: "calma",          desc: "Quando le parole non escono, questa carta parla per te. Preparala prima.", render: renderSOSCard },
 ];
 
 /* ============================================================
@@ -94,14 +95,16 @@ function renderPomodoro(container) {
     if (fase === "lavoro") {
       fatteOggi++;
       DB.state.stats.totalPomodoros++;
-      DB.save();
+      DB.logEvento("pomodoro");
       App.checkBadges();
       App.confetti();
       App.toast("🍅 Sessione di focus completata! Ora pausa vera: alzati e muoviti.");
+      App.notify("🍅 Sessione completata!", "Ora pausa vera: alzati, muoviti, bevi.");
       disegnaDots();
       impostaFase("pausa");
     } else {
       App.toast("🔔 Pausa finita. Pronto per un'altra sessione?");
+      App.notify("🔔 Pausa finita", "Quando vuoi, si riparte con un'altra sessione.");
       impostaFase("lavoro");
       pausa(); // la nuova sessione parte solo quando lo decidi tu
     }
@@ -197,7 +200,7 @@ function renderAttivita(container) {
         if (act === "done") {
           t.col = "fatto";
           DB.state.stats.totalTasksDone++;
-          DB.save();
+          DB.logEvento("task");
           App.checkBadges();
           App.confetti(40);
           App.toast("Fatto! Una in meno 🎉");
@@ -259,7 +262,10 @@ function renderDump(container) {
           <div class="field">
             <textarea data-input rows="3" maxlength="500" placeholder="Es. “ricordati la bolletta”, “idea per il regalo”, “sono in ansia per giovedì”…" aria-label="Nuovo pensiero"></textarea>
           </div>
-          <button class="btn" type="submit">🧺 Scarica il pensiero</button>
+          <div class="btn-row">
+            <button class="btn" type="submit">🧺 Scarica il pensiero</button>
+            <button class="btn btn-ghost" type="button" data-mic hidden>🎤 Detta a voce</button>
+          </div>
         </form>
       </div>
       <div data-list>
@@ -284,6 +290,35 @@ function renderDump(container) {
       App.toast("Fuori dalla testa, al sicuro qui 🧺");
       draw();
     });
+
+    // dettatura vocale, se il browser la supporta (quando scrivere è già troppo)
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = container.querySelector("[data-mic]");
+    if (SR && micBtn) {
+      micBtn.hidden = false;
+      let rec = null;
+      micBtn.addEventListener("click", () => {
+        if (rec) { rec.stop(); return; }
+        rec = new SR();
+        rec.lang = "it-IT";
+        rec.interimResults = false;
+        micBtn.textContent = "⏹️ Sto ascoltando…";
+        micBtn.classList.add("mic-attivo");
+        rec.onresult = ev => {
+          const testo = Array.from(ev.results).map(r => r[0].transcript).join(" ");
+          const input = container.querySelector("[data-input]");
+          input.value = (input.value + " " + testo).trim();
+        };
+        rec.onend = () => {
+          micBtn.textContent = "🎤 Detta a voce";
+          micBtn.classList.remove("mic-attivo");
+          rec = null;
+        };
+        rec.onerror = rec.onend;
+        try { rec.start(); } catch (e) { rec = null; }
+      });
+      App.addCleanup(() => { try { rec?.stop(); } catch (e) { /* già fermo */ } });
+    }
 
     container.querySelectorAll("[data-task]").forEach(b => b.addEventListener("click", () => {
       const n = DB.state.dump.find(x => x.id === b.dataset.task);
@@ -614,6 +649,7 @@ function renderRoutine(container) {
       if (resta <= 0) {
         App.beep(500, 0.2);
         App.toast("⏰ Tempo del passo finito: quando sei pronto premi “Fatto”!");
+        App.notify("⏰ Passo finito", `“${r.steps[idx].name}” è al tempo: premi Fatto quando sei pronto.`);
         resta = 0; attivo = false;
       }
       draw();
@@ -960,4 +996,94 @@ function renderGrounding(container) {
     <button class="btn btn-big" data-start>Iniziamo insieme 💜</button>`;
   container.appendChild(intro);
   intro.querySelector("[data-start]").addEventListener("click", draw);
+}
+
+/* ============================================================
+   CARTA SOS (comunicazione per i momenti in cui le parole non escono)
+   ============================================================ */
+function renderSOSCard(container) {
+  const BISOGNI = [
+    { id: "silenzio", emoji: "🤫", label: "Silenzio, per favore" },
+    { id: "spazio", emoji: "↔️", label: "Un po' di spazio" },
+    { id: "uscire", emoji: "🚪", label: "Devo uscire da qui" },
+    { id: "acqua", emoji: "💧", label: "Acqua" },
+    { id: "persona", emoji: "🫂", label: "La mia persona di fiducia" },
+    { id: "tempo", emoji: "⏳", label: "Solo un po' di tempo" },
+    { id: "cuffie", emoji: "🎧", label: "Le mie cuffie" },
+    { id: "abbraccio", emoji: "🤗", label: "Un abbraccio (se chiedo io)" },
+  ];
+
+  function config() {
+    const sos = DB.state.sos;
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:1rem">
+        <p style="margin-bottom:.8rem">
+          Prepara la carta <strong>adesso, da calmo</strong>: nei momenti di shutdown o sovraccarico
+          basterà aprirla e mostrarla. Schermo intero, testo grande, zero parole da trovare.
+        </p>
+        <div class="field">
+          <label for="sos-msg">Il tuo messaggio</label>
+          <textarea id="sos-msg" rows="3" maxlength="200">${App.escapeHTML(sos.msg)}</textarea>
+        </div>
+        <label>Cosa ti aiuta di solito? (comparirà sulla carta)</label>
+        <div class="sos-needs-pick" style="margin-top:.5rem">
+          ${BISOGNI.map(b => `
+            <button class="sos-need-opt ${sos.needs.includes(b.id) ? "on" : ""}" data-need="${b.id}" aria-pressed="${sos.needs.includes(b.id)}">
+              ${b.emoji} ${b.label}
+            </button>`).join("")}
+        </div>
+        <div class="btn-row" style="margin-top:1.2rem">
+          <button class="btn btn-warn btn-big" data-apri>🆘 APRI LA CARTA</button>
+          <button class="btn btn-ghost" data-salva>💾 Salva le modifiche</button>
+        </div>
+        <p class="focus-limit-note">💡 Consiglio: mostra questa pagina in anticipo alle persone care, così sapranno cosa significa quando gliela porgi.</p>
+      </div>`;
+
+    container.querySelectorAll("[data-need]").forEach(b => b.addEventListener("click", () => {
+      const id = b.dataset.need;
+      const i = DB.state.sos.needs.indexOf(id);
+      if (i >= 0) DB.state.sos.needs.splice(i, 1);
+      else DB.state.sos.needs.push(id);
+      DB.save();
+      b.classList.toggle("on");
+      b.setAttribute("aria-pressed", b.classList.contains("on"));
+    }));
+    container.querySelector("[data-salva]").addEventListener("click", () => {
+      DB.state.sos.msg = container.querySelector("#sos-msg").value.trim() || DB.state.sos.msg;
+      DB.save();
+      App.toast("Carta salvata, pronta quando serve 💜");
+    });
+    container.querySelector("[data-apri]").addEventListener("click", () => {
+      DB.state.sos.msg = container.querySelector("#sos-msg").value.trim() || DB.state.sos.msg;
+      DB.save();
+      apriCarta();
+    });
+  }
+
+  function apriCarta() {
+    const sos = DB.state.sos;
+    const scelti = BISOGNI.filter(b => sos.needs.includes(b.id));
+    const overlay = document.createElement("div");
+    overlay.className = "sos-overlay";
+    overlay.innerHTML = `
+      <button class="sos-close" aria-label="Chiudi la carta">✕</button>
+      <p class="sos-msg">${App.escapeHTML(sos.msg)}</p>
+      ${scelti.length ? `<p class="sos-sub">Mi aiuterebbe:</p>
+      <div class="sos-needs">
+        ${scelti.map(b => `<button class="sos-need">${b.emoji}<span>${b.label}</span></button>`).join("")}
+      </div>` : ""}
+      <p class="sos-footer">Grazie per la pazienza. Passerà. 💜</p>`;
+    document.body.appendChild(overlay);
+    const chiudi = () => overlay.remove();
+    overlay.querySelector(".sos-close").addEventListener("click", chiudi);
+    App.addCleanup(chiudi);
+    // tocca un bisogno per evidenziarlo (per indicare senza parlare)
+    overlay.querySelectorAll(".sos-need").forEach(b =>
+      b.addEventListener("click", () => {
+        overlay.querySelectorAll(".sos-need").forEach(x => x.classList.remove("evidenziato"));
+        b.classList.add("evidenziato");
+      }));
+  }
+
+  config();
 }

@@ -709,6 +709,90 @@ details.res-details summary {
 }
 .modal h2 { margin-bottom: .8rem; }
 
+/* ---------- Percorsi guidati ---------- */
+.percorso-progress {
+  height: 8px; background: var(--bg-soft); border-radius: 999px;
+  overflow: hidden; margin-top: .4rem;
+}
+.percorso-progress > div { height: 100%; background: var(--accent); border-radius: 999px; transition: width .4s; }
+.giorno-card { margin-bottom: .7rem; padding: 0; overflow: hidden; }
+.giorno-card summary {
+  display: flex; align-items: center; gap: .7rem;
+  padding: 1rem 1.2rem; cursor: pointer; font-weight: 700;
+  list-style: none;
+}
+.giorno-card summary::-webkit-details-marker { display: none; }
+.giorno-card .giorno-num {
+  flex-shrink: 0; font-size: .8rem; font-weight: 800;
+  background: var(--primary-soft); color: var(--primary);
+  border-radius: 999px; padding: .25rem .7rem;
+}
+.giorno-card.fatto .giorno-num { background: var(--accent-soft); }
+.giorno-card.fatto .giorno-titolo { color: var(--text-soft); }
+.giorno-card.prossimo { border-color: var(--primary); border-width: 2px; }
+.giorno-card .giorno-oggi { margin-left: auto; color: var(--primary); font-size: .82rem; font-weight: 800; white-space: nowrap; }
+.giorno-card .giorno-body { padding: 0 1.2rem 1.2rem; }
+.giorno-card .giorno-body > p { color: var(--text-soft); }
+.giorno-fonte { font-size: .78rem; color: var(--text-soft); margin-bottom: .8rem; }
+
+/* ---------- Carta SOS ---------- */
+.sos-needs-pick { display: flex; flex-wrap: wrap; gap: .5rem; }
+.sos-need-opt {
+  border: 2px solid var(--border); background: var(--bg-card);
+  border-radius: 999px; padding: .5rem 1rem; font-weight: 700; color: var(--text-soft);
+  transition: border-color var(--anim), background var(--anim), color var(--anim);
+}
+.sos-need-opt.on { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.sos-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: #0d0b14; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1.2rem; padding: 2rem 1.5rem; text-align: center;
+}
+.sos-overlay .sos-msg { font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 800; max-width: 22ch; line-height: 1.4; }
+.sos-overlay .sos-sub { font-size: 1.1rem; opacity: .75; }
+.sos-overlay .sos-needs { display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; max-width: 640px; }
+.sos-overlay .sos-need {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  background: #221e2f; color: #fff; border: 2px solid #3a3453;
+  border-radius: 16px; padding: 1rem 1.3rem; font-size: 1.6rem; font-weight: 700;
+  min-width: 120px;
+}
+.sos-overlay .sos-need span { font-size: .85rem; }
+.sos-overlay .sos-need.evidenziato { background: #f5a623; border-color: #f5a623; color: #241a00; }
+.sos-overlay .sos-footer { opacity: .55; font-size: .95rem; }
+.sos-overlay .sos-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: #221e2f; color: #fff; border: none; border-radius: 50%;
+  width: 48px; height: 48px; font-size: 1.2rem;
+}
+
+/* ---------- Insight, TTS, dettatura ---------- */
+.insight-list { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+.insight-list li {
+  background: var(--bg-soft); border-radius: var(--radius-s);
+  padding: .7rem 1rem; font-size: .95rem;
+}
+.tts-btn {
+  border: 2px solid var(--border); background: var(--bg-card);
+  border-radius: 999px; padding: .3rem .8rem; font-size: .8rem; font-weight: 700;
+  color: var(--text-soft);
+}
+.tts-btn:hover { border-color: var(--primary); color: var(--primary); }
+.tts-btn.leggendo { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
+.mic-attivo { background: var(--warn-soft) !important; border-color: var(--warn) !important; color: var(--warn) !important; animation: mic-pulse 1.2s infinite; }
+@keyframes mic-pulse { 50% { opacity: .6; } }
+
+/* ---------- Stampa (report per il professionista) ---------- */
+@media print {
+  .topbar, .mainnav, .footer, .no-print, .toast-zone, .confetti-zone { display: none !important; }
+  body { background: #fff; color: #000; }
+  .main { padding: 0; max-width: 100%; }
+  .card { box-shadow: none; border: 1px solid #bbb; break-inside: avoid; }
+  .view { animation: none; }
+  .score-table th, .score-table td { border-bottom: 1px solid #ccc; }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 720px) {
   .topbar { padding: .55rem .8rem; }
