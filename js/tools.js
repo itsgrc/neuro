@@ -15,6 +15,8 @@ const TOOLS = [
   { id: "respiro",   emoji: "🫁", nome: "Respira con me",      tag: "calma",          desc: "Respirazione guidata e animata per calmare corpo e mente.", render: renderRespiro },
   { id: "grounding", emoji: "🌍", nome: "SOS sovraccarico",    tag: "calma",          desc: "L'esercizio 5-4-3-2-1 per tornare al presente quando è troppo.", render: renderGrounding },
   { id: "sos",       emoji: "🆘", nome: "Carta SOS",           tag: "calma",          desc: "Quando le parole non escono, questa carta parla per te. Preparala prima.", render: renderSOSCard },
+  { id: "bodyscan",  emoji: "🧘", nome: "Scansione corporea",  tag: "calma",          desc: "Un viaggio guidato nel corpo, una zona alla volta. Mindfulness senza fronzoli.", render: renderBodyscan },
+  { id: "gratitudine", emoji: "✨", nome: "Tre cose buone",     tag: "calma",          desc: "Ogni sera, tre cose andate bene. L'esercizio più studiato della psicologia positiva.", render: renderGratitudine },
 ];
 
 /* ============================================================
@@ -1086,4 +1088,173 @@ function renderSOSCard(container) {
   }
 
   config();
+}
+
+/* ============================================================
+   SCANSIONE CORPOREA (mindfulness guidata)
+   ============================================================ */
+function renderBodyscan(container) {
+  const ZONE = [
+    { emoji: "🦶", nome: "I piedi", testo: "Porta l'attenzione ai piedi. Senti il contatto col pavimento, la temperatura, il peso. Non devi rilassarli: solo notarli." },
+    { emoji: "🦵", nome: "Le gambe", testo: "Risali lungo le gambe. Nota dove appoggiano, se ci sono tensioni, formicolii, o niente di particolare. Va bene tutto." },
+    { emoji: "🫃", nome: "Pancia e respiro", testo: "Osserva la pancia che si alza e si abbassa da sola. Non cambiare il respiro: guardalo lavorare per te." },
+    { emoji: "🖐️", nome: "Mani e braccia", testo: "Senti le mani: sono calde, fredde, pesanti? Nota le braccia appoggiate. Se la mente scappa, riportala qui con gentilezza." },
+    { emoji: "🫁", nome: "Spalle e petto", testo: "Le spalle raccolgono la giornata. Notale senza giudizio. Se vogliono scendere un po', lasciale fare." },
+    { emoji: "🙂", nome: "Viso e testa", testo: "Rilassa la mascella, la fronte, lo spazio tra le sopracciglia. Anche gli occhi possono riposare, dietro le palpebre." },
+    { emoji: "🌟", nome: "Tutto il corpo", testo: "Ora senti il corpo intero, tutto insieme: un'unica cosa viva che respira. Resta qui per gli ultimi secondi. Ben fatto." },
+  ];
+  const DURATE = [3, 5];
+  let interval = null;
+  App.addCleanup(() => clearInterval(interval));
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Scansione corporea</h2>
+        <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
+          Un giro guidato del corpo in ${ZONE.length} tappe: la voce del passo cambia da sola,
+          tu devi solo seguire. Mettiti comodo, seduto o sdraiato.
+        </p>
+        <div class="btn-row" style="justify-content:center">
+          ${DURATE.map(d => `<button class="btn btn-big" data-min="${d}">${d} minuti</button>`).join("")}
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-min]").forEach(b =>
+      b.addEventListener("click", () => start(Number(b.dataset.min))));
+  }
+
+  function start(minuti) {
+    const perZona = Math.round((minuti * 60) / ZONE.length);
+    let idx = 0, resta = perZona;
+
+    function draw() {
+      const z = ZONE[idx];
+      container.innerHTML = `
+        <div class="card ground-step">
+          <div class="ground-dots">${ZONE.map((_, i) => `<span class="${i <= idx ? "on" : ""}"></span>`).join("")}</div>
+          <div style="font-size:3rem">${z.emoji}</div>
+          <div class="g-sense">${z.nome}</div>
+          <p class="g-desc">${z.testo}</p>
+          <div class="rp-timer" style="font-size:2rem">${resta}s</div>
+          <div class="btn-row" style="justify-content:center; margin-top:.8rem">
+            <button class="btn tts-btn btn-ghost" data-tts>🔊 Ascolta</button>
+            <button class="btn btn-ghost" data-stop>Esci</button>
+          </div>
+        </div>`;
+      container.querySelector("[data-stop]").addEventListener("click", () => { clearInterval(interval); menu(); });
+      container.querySelector("[data-tts]").addEventListener("click", e => App.speak(`${z.nome}. ${z.testo}`, e.target));
+    }
+
+    interval = setInterval(() => {
+      resta--;
+      const timerEl = container.querySelector(".rp-timer");
+      if (timerEl) timerEl.textContent = `${resta}s`;
+      if (resta <= 0) {
+        idx++;
+        if (idx >= ZONE.length) {
+          clearInterval(interval);
+          DB.state.stats.breathSessions++;
+          DB.save();
+          App.checkBadges();
+          App.confetti(40);
+          container.innerHTML = `
+            <div class="card game-over-card">
+              <div class="big-emoji">🧘</div>
+              <h2>Scansione completata.</h2>
+              <p class="result-line">${minuti} minuti tutti per te. Com'è il corpo, adesso?</p>
+              <div class="btn-row" style="justify-content:center; margin-top:1rem">
+                <button class="btn" data-again>🔁 Un altro giro</button>
+                <a class="btn btn-ghost" href="#/strumento/umore">🌤️ Registra come stai</a>
+              </div>
+            </div>`;
+          container.querySelector("[data-again]").addEventListener("click", menu);
+          return;
+        }
+        resta = perZona;
+        App.beep(520, 0.1);
+        draw();
+      }
+    }, 1000);
+
+    draw();
+  }
+
+  menu();
+}
+
+/* ============================================================
+   TRE COSE BUONE (gratitudine, Seligman et al. 2005)
+   ============================================================ */
+function renderGratitudine(container) {
+  function streakGratitudine() {
+    let s = 0;
+    for (let i = 0; ; i++) {
+      const k = DB.todayKey(-i);
+      const g = DB.state.gratitudine[k];
+      if (g && g.filter(x => x && x.trim()).length >= 3) s++;
+      else if (i === 0) continue; // oggi incompleto non spezza la serie
+      else break;
+    }
+    return s;
+  }
+
+  function draw() {
+    const oggi = DB.todayKey();
+    const voci = DB.state.gratitudine[oggi] || ["", "", ""];
+    const complete = voci.filter(v => v && v.trim()).length;
+    const streak = streakGratitudine();
+
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:1rem">
+        <p style="margin-bottom:1rem">
+          Quali <strong>tre cose sono andate bene oggi</strong>? Anche minuscole: il caffè giusto,
+          un messaggio carino, il semaforo verde. Il cervello dà spazio gratis al negativo —
+          questo è il contrappeso quotidiano. ✨
+        </p>
+        ${[0, 1, 2].map(i => `
+          <div class="field">
+            <label for="grat-${i}">${["1️⃣", "2️⃣", "3️⃣"][i]} Cosa buona</label>
+            <input type="text" id="grat-${i}" data-grat="${i}" maxlength="120"
+              value="${App.escapeHTML(voci[i] || "")}"
+              placeholder="${["Es. “la pausa pranzo al sole”", "Es. “ho finito quella cosa che rimandavo”", "Es. “la serie nuova è bellissima”"][i]}">
+          </div>`).join("")}
+        <div class="btn-row">
+          <button class="btn" data-salva>💾 Salva le mie tre cose</button>
+          ${streak >= 2 ? `<span class="habit-streak" style="align-self:center">🔥 ${streak} sere di fila</span>` : ""}
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:.6rem">Le sere passate</h3>
+        ${Object.keys(DB.state.gratitudine).length === 0 ? `<p class="task-empty">Le tue cose buone appariranno qui, sera dopo sera 🌙</p>` : ""}
+        ${Array.from({ length: 7 }, (_, i) => {
+          const k = DB.todayKey(-(i + 1));
+          const g = DB.state.gratitudine[k];
+          if (!g || !g.some(x => x && x.trim())) return "";
+          const d = new Date(); d.setDate(d.getDate() - (i + 1));
+          return `<div class="dump-note" style="border-left-color:var(--accent); background:var(--accent-soft)">
+            <div class="dump-text">
+              ${g.filter(x => x && x.trim()).map(x => `• ${App.escapeHTML(x)}`).join("<br>")}
+              <span class="dump-date">${d.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "short" })}</span>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>`;
+
+    container.querySelector("[data-salva]").addEventListener("click", () => {
+      const nuove = [0, 1, 2].map(i => container.querySelector(`[data-grat="${i}"]`).value.trim());
+      if (!nuove.some(v => v)) { App.toast("Scrivi almeno una cosa buona 😊"); return; }
+      DB.state.gratitudine[oggi] = nuove;
+      DB.save();
+      const n = nuove.filter(v => v).length;
+      if (n >= 3) {
+        App.confetti(40);
+        App.toast("Tre su tre! Il contrappeso di oggi è al suo posto ✨");
+      } else {
+        App.toast(`Salvate ${n} su 3: puoi completare quando vuoi 🌙`);
+      }
+      draw();
+    });
+  }
+
+  draw();
 }

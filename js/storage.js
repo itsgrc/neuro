@@ -22,6 +22,7 @@ const DB = (() => {
       totalTasksDone: 0,
       breathSessions: 0,
       groundingSessions: 0,
+      workoutsDone: 0,
       visitStreak: 1,
       lastVisit: null,        // "YYYY-MM-DD"
       bestScores: {},         // { gameId: { label, value, better } }
@@ -36,6 +37,9 @@ const DB = (() => {
     pomodoro: { work: 25, pause: 5, goal: 4 },
     eventi: [],               // registro locale { t, k: "pomodoro"|"gioco"|"task" } per gli insight
     percorsi: {},             // { idPercorso: [indici dei giorni completati] }
+    playedByDay: {},          // { "YYYY-MM-DD": [id dei giochi giocati] } per l'allenamento del giorno
+    workoutDays: {},          // { "YYYY-MM-DD": true } giorni con allenamento completato
+    gratitudine: {},          // { "YYYY-MM-DD": ["cosa 1", "cosa 2", "cosa 3"] }
     sos: {                    // carta di comunicazione per i momenti difficili
       msg: "Sto attraversando un momento difficile. Non riesco a parlare, adesso. Non è colpa tua.",
       needs: ["silenzio", "tempo"],

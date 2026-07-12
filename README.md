@@ -1,12 +1,15 @@
 # 🧠 NeuroSpazio
 
-**Giochi, strumenti e supporto per ADHD e altre neurodivergenze — in italiano, gratis, senza account.**
+**La palestra della mente e lo spazio completo per la mente — pensata per menti neurodivergenti, utile a chiunque. In italiano, gratis, senza account.**
 
-NeuroSpazio è una web app pensata per menti neurodivergenti (ADHD, autismo, DSA e non solo): un posto accogliente dove allenare l'attenzione giocando, organizzare le giornate senza sovraccaricarsi e ritrovare la calma nei momenti difficili.
+NeuroSpazio è una web app (PWA installabile) nata per menti neurodivergenti (ADHD, autismo, DSA e non solo) e aperta a tutti: un posto accogliente dove allenare la mente con un circuito quotidiano su basi scientifiche, organizzare le giornate senza sovraccaricarsi e ritrovare la calma nei momenti difficili.
 
 ## ✨ Cosa c'è dentro
 
-### 🎮 8 giochi di allenamento cognitivo
+### 🏋️ La palestra: allenamento del giorno
+Ogni giorno l'app propone un **circuito di 3 esercizi** che ruota su tutti i domini cognitivi (memoria, attenzione, inibizione, flessibilità, tempo, senso del numero), con spunte di completamento, storico settimanale e badge. Il principio è la **pratica distribuita**: sessioni brevi e frequenti battono le maratone (Cepeda et al., 2006).
+
+### 🎮 11 giochi di allenamento cognitivo
 | Gioco | Cosa allena | Più indicato per | Base scientifica |
 |---|---|---|---|
 | 🃏 **Coppie di memoria** | Memoria di lavoro (3 difficoltà) | ⚡ ADHD · 📖 DSA | Martinussen et al., 2005; Gathercole & Alloway, 2008 |
@@ -17,10 +20,13 @@ NeuroSpazio è una web app pensata per menti neurodivergenti (ADHD, autismo, DSA
 | 🌊 **Flusso** (n-back) | Memoria di lavoro avanzata | ⚡ ADHD · 📖 DSA | Kirchner, 1958; Jaeggi et al., 2008 |
 | ⏱️ **Un minuto esatto** | Percezione del tempo ("cecità al tempo") | ⚡ ADHD | Noreika et al., 2013; Toplak et al., 2006 |
 | 🔀 **Cambio di rotta** | Flessibilità cognitiva (task switching) | ⚡ ADHD · ♾️ Autismo | Miyake et al., 2000; Monsell, 2003 |
+| 👁️ **Colpo d'occhio** | Senso del numero (stima non verbale) | 📖 DSA | Halberda et al., 2008 (*Nature*) |
+| 🟪 **Percorso di blocchi** (Corsi) | Memoria visuo-spaziale | ⚡ ADHD · 📖 DSA | Kessels et al., 2000 |
+| 🚦 **Semaforo** (go/no-go) | Inibizione della risposta | ⚡ ADHD · 🌀 Tourette | Verbruggen & Logan, 2008 |
 
 Ogni gioco salva i record personali, sblocca badge 🏆 e include una scheda **"🔬 Per chi è pensato e perché funziona"** con le fonti.
 
-### 🧰 11 strumenti quotidiani
+### 🧰 13 strumenti quotidiani
 | Strumento | Più indicato per | Base scientifica |
 |---|---|---|
 | 🍅 **Timer di focus** (Pomodoro) | ⚡ ADHD · 📖 DSA | "Cecità al tempo": Barkley, 1997; Cirillo, 2018 |
@@ -34,6 +40,8 @@ Ogni gioco salva i record personali, sblocca badge 🏆 e include una scheda **"
 | 🫁 **Respira con me** (4-4-4-4, 4-7-8, 5-5) | 🌊 Ansia · ♾️ Autismo · 🌀 Tourette | Zaccaro et al., 2018; Lehrer & Gevirtz, 2014 |
 | 🌍 **SOS sovraccarico** (grounding 5-4-3-2-1) | 🌊 Ansia · ♾️ Autismo | Najavits, 2002 |
 | 🆘 **Carta SOS** (comunicazione per shutdown/meltdown) | ♾️ Autismo · 🌊 Ansia | Principi CAA: Beukelman & Mirenda, 2013 |
+| 🧘 **Scansione corporea** (mindfulness guidata, 3/5 min) | 🌊 Ansia · ♾️ Autismo · per tutti | Khoury et al., 2013 |
+| ✨ **Tre cose buone** (diario della gratitudine) | 🌊 Ansia · per tutti | Seligman et al., 2005; Emmons & McCullough, 2003 |
 
 Nelle pagine Giochi e Strumenti puoi **filtrare per neurodivergenza** (ADHD, autismo, DSA, ansia/emozioni, Tourette).
 
@@ -53,7 +61,7 @@ Micro-lezioni quotidiane con fonte scientifica + un'azione concreta al giorno:
 L'app calcola **solo sul tuo dispositivo** i tuoi schemi (fasce orarie d'oro, trend dell'umore, giorno migliore/peggiore della settimana) e genera un **report stampabile** da portare a psicologo, neuropsichiatra o medico — con nota metodologica sul self-monitoring (Korotitsch & Nelson-Gray, 1999). Non è uno strumento diagnostico.
 
 ### 🔬 Basi scientifiche e onestà
-Ogni scheda cita fonti accademiche verificate (44 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
+Ogni scheda cita fonti accademiche verificate (50 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
 
 ### 📚 Risorse
 Spiegazioni chiare e rispettose su ADHD, autismo, dislessia, discalculia, disgrafia, Tourette, funzioni esecutive ed emozioni intense, con strategie concrete, guide pratiche (studio, lavoro, casa, sonno, relazioni, autostima) e indicazioni su dove trovare aiuto in Italia.
@@ -95,8 +103,8 @@ icons/                # icone dell'app
 css/styles.css        # stili, temi, accessibilità, stampa
 js/storage.js         # stato e persistenza (localStorage)
 js/data.js            # contenuti: risorse, percorsi, bibliografia, badge
-js/games.js           # gli 8 giochi
-js/tools.js           # gli 11 strumenti
+js/games.js           # gli 11 giochi
+js/tools.js           # i 13 strumenti
 js/app.js             # router, viste, insight, report, impostazioni
 ```
 

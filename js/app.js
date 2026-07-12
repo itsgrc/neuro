@@ -110,11 +110,41 @@ const App = (() => {
     const giorniPercorsi = Object.values(DB.state.percorsi || {});
     if (giorniPercorsi.some(g => g.length >= 1)) earn("primo-giorno-percorso");
     if (giorniPercorsi.some(g => g.length >= 7)) earn("percorso-completo");
+    if (s.workoutsDone >= 1) earn("primo-allenamento");
+    if (s.workoutsDone >= 7) earn("atleta-mente");
+  }
+
+  /* ---------- palestra della mente: allenamento del giorno ---------- */
+  let currentGameId = null; // impostato da viewGioco, usato per il registro giornaliero
+
+  // circuito quotidiano di 3 esercizi: ruota in modo deterministico sulla data,
+  // così in ~4 giorni passi per tutti i domini cognitivi (pratica distribuita, Cepeda et al. 2006)
+  function workoutOggi() {
+    const giorno = Math.floor(Date.now() / 86400000);
+    const n = GAMES.length;
+    const start = (giorno * 3) % n;
+    return [GAMES[start], GAMES[(start + 1) % n], GAMES[(start + 2) % n]];
   }
 
   function recordGamePlayed() {
     DB.state.stats.totalGames++;
     DB.logEvento("gioco");
+    if (currentGameId) {
+      const k = DB.todayKey();
+      const arr = DB.state.playedByDay[k] = DB.state.playedByDay[k] || [];
+      if (!arr.includes(currentGameId)) arr.push(currentGameId);
+      // teniamo solo gli ultimi 30 giorni
+      const chiavi = Object.keys(DB.state.playedByDay).sort();
+      while (chiavi.length > 30) delete DB.state.playedByDay[chiavi.shift()];
+      // circuito del giorno completato?
+      if (!DB.state.workoutDays[k] && workoutOggi().every(g => arr.includes(g.id))) {
+        DB.state.workoutDays[k] = true;
+        DB.state.stats.workoutsDone++;
+        confetti(80);
+        toast("🏋️ Allenamento del giorno completato! Costanza batte intensità.");
+      }
+      DB.save();
+    }
     checkBadges();
   }
 
@@ -247,7 +277,7 @@ const App = (() => {
       <div class="view">
         <section class="hero">
           <h1>${saluto}! 👋</h1>
-          <p>Questo è il tuo spazio: giochi per allenare la mente, strumenti per le giornate storte e quelle buone. Senza giudizi, al tuo ritmo.</p>
+          <p>La tua palestra della mente e il tuo spazio sicuro: esercizi con basi scientifiche, strumenti per le giornate storte e quelle buone. Pensato per menti neurodivergenti, utile a chiunque abbia un cervello. Senza giudizi, al tuo ritmo.</p>
           <div class="streak-pill">🔥 ${s.visitStreak} ${s.visitStreak === 1 ? "giorno" : "giorni"} di fila qui</div>
         </section>
 
@@ -289,11 +319,45 @@ const App = (() => {
           }).join("")}
         </div>
 
-        <div class="home-section-title"><h2>🎮 Allena la mente</h2><a href="#/giochi">Tutti i giochi →</a></div>
-        <div class="grid grid-3">${GAMES.slice(0, 3).map(g => tileHTML(g, "gioco")).join("")}</div>
+        <div class="home-section-title"><h2>🏋️ Allenamento del giorno</h2><a href="#/giochi">Tutta la palestra →</a></div>
+        <div class="grid grid-3">${workoutOggi().map(g => tileHTML(g, "gioco")).join("")}</div>
 
         <div class="home-section-title"><h2>🧰 Strumenti del giorno</h2><a href="#/strumenti">Tutti gli strumenti →</a></div>
         <div class="grid grid-3">${[TOOLS[0], TOOLS[4], TOOLS[8]].map(t => tileHTML(t, "strumento")).join("")}</div>
+      </div>`;
+  }
+
+  function workoutCardHTML() {
+    const k = DB.todayKey();
+    const giocatiOggi = DB.state.playedByDay[k] || [];
+    const piano = workoutOggi();
+    const fattiOggi = piano.filter(g => giocatiOggi.includes(g.id)).length;
+    const completato = DB.state.workoutDays[k];
+    return `
+      <div class="card workout-card">
+        <div class="workout-head">
+          <h2>🏋️ Allenamento del giorno</h2>
+          <span class="workout-count ${completato ? "completo" : ""}">${completato ? "✅ Completato!" : `${fattiOggi}/3 esercizi`}</span>
+        </div>
+        <p class="workout-note">Il circuito di oggi tocca 3 domini cognitivi diversi e ruota ogni giorno: 10 minuti al giorno battono 2 ore la domenica (pratica distribuita: Cepeda et al., 2006).</p>
+        <div class="workout-games">
+          ${piano.map(g => `
+            <a class="workout-game ${giocatiOggi.includes(g.id) ? "fatto" : ""}" href="#/gioco/${g.id}">
+              <span class="wg-emoji">${g.emoji}</span>
+              <span class="wg-nome">${g.nome}</span>
+              <span class="wg-stato">${giocatiOggi.includes(g.id) ? "✅" : "▶️"}</span>
+            </a>`).join("")}
+        </div>
+        <div class="workout-week" aria-label="Allenamenti degli ultimi 7 giorni">
+          ${Array.from({ length: 7 }, (_, i) => {
+            const key = DB.todayKey(-(6 - i));
+            const d = new Date(); d.setDate(d.getDate() - (6 - i));
+            return `<div class="ww-day ${DB.state.workoutDays[key] ? "hit" : ""} ${i === 6 ? "today" : ""}">
+              <span>${["D", "L", "M", "M", "G", "V", "S"][d.getDay()]}</span>
+            </div>`;
+          }).join("")}
+          <span class="ww-tot">🏅 ${DB.state.stats.workoutsDone} totali</span>
+        </div>
       </div>`;
   }
 
@@ -303,9 +367,10 @@ const App = (() => {
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
-          <h1>🎮 Giochi</h1>
-          <p>Partite brevi che allenano attenzione, memoria e autocontrollo. Le etichette dicono per quali neurodivergenze ogni gioco è più indicato — e in ogni gioco trovi il perché, con le fonti scientifiche.</p>
+          <h1>🎮 La palestra della mente</h1>
+          <p>11 esercizi brevi su 6 domini cognitivi: memoria, attenzione, inibizione, flessibilità, tempo e senso del numero. Per menti neurodivergenti e per chiunque voglia allenarsi — con le fonti scientifiche in ogni scheda.</p>
         </div>
+        ${workoutCardHTML()}
         ${filterRowHTML(f)}
         <div class="grid grid-3">${items.map(g => tileHTML(g, "gioco")).join("")}</div>
         ${items.length === 0 ? `<p class="task-empty">Nessun gioco con questa etichetta (per ora!).</p>` : ""}
@@ -319,6 +384,7 @@ const App = (() => {
   function viewGioco(id) {
     const g = GAMES.find(x => x.id === id);
     if (!g) return navigate("/giochi");
+    currentGameId = g.id;
     main.innerHTML = `
       <div class="view game-shell">
         <a class="back-link" href="#/giochi">← Tutti i giochi</a>
@@ -336,7 +402,7 @@ const App = (() => {
       <div class="view">
         <div class="page-head">
           <h1>🧰 Strumenti</h1>
-          <p>Aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi. Filtra per neurodivergenza, e in ogni strumento scopri perché funziona, con le fonti.</p>
+          <p>13 aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi, conoscersi. Filtra per neurodivergenza, e in ogni strumento scopri perché funziona, con le fonti.</p>
         </div>
         ${filterRowHTML(f)}
         <div class="grid grid-3">${items.map(t => tileHTML(t, "strumento")).join("")}</div>
@@ -470,6 +536,7 @@ const App = (() => {
           <div class="stat-box"><div class="stat-num">${s.totalPomodoros}</div><div class="stat-label">sessioni di focus</div></div>
           <div class="stat-box"><div class="stat-num">${s.totalTasksDone}</div><div class="stat-label">attività completate</div></div>
           <div class="stat-box"><div class="stat-num">${s.breathSessions + s.groundingSessions}</div><div class="stat-label">momenti di calma</div></div>
+          <div class="stat-box"><div class="stat-num">🏋️ ${s.workoutsDone}</div><div class="stat-label">allenamenti completi</div></div>
         </div>
 
         <div class="card" style="margin-bottom:1.6rem">
@@ -910,6 +977,7 @@ const App = (() => {
   function route() {
     runCleanups();
     if ("speechSynthesis" in window) speechSynthesis.cancel();
+    currentGameId = null; // viewGioco lo reimposta quando serve
     document.title = "NeuroSpazio";
     const path = location.hash.slice(1) || "/home";
     const r = routes.find(x => x.re.test(path));

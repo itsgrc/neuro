@@ -69,6 +69,30 @@ const GAMES = [
     tag: "focus",
     render: renderRotta,
   },
+  {
+    id: "stima",
+    emoji: "👁️",
+    nome: "Colpo d'occhio",
+    desc: "Quale lato ha più pallini? Niente conte: allena il senso del numero.",
+    tag: "focus",
+    render: renderStima,
+  },
+  {
+    id: "corsi",
+    emoji: "🟪",
+    nome: "Percorso di blocchi",
+    desc: "Ripeti il percorso che si illumina sulla griglia. Memoria spaziale pura.",
+    tag: "memoria",
+    render: renderCorsi,
+  },
+  {
+    id: "gonogo",
+    emoji: "🚦",
+    nome: "Semaforo",
+    desc: "Premi col verde, fermati col rosso. Sembra facile… per 45 secondi.",
+    tag: "focus",
+    render: renderGonogo,
+  },
 ];
 
 /* ---------- utilità comuni ai giochi ---------- */
@@ -875,6 +899,313 @@ function renderRotta(container) {
 
     disegnaBottoni();
     prossima();
+  }
+
+  menu();
+}
+
+/* ============================================================
+   9) COLPO D'OCCHIO (stima numerica / senso del numero)
+   ============================================================ */
+function renderStima(container) {
+  const TRIALS = 12;
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Colpo d'occhio</h2>
+        <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
+          Due nuvole di pallini compaiono per un attimo:<br>
+          <strong>tocca il lato che ne ha di più</strong>.<br>
+          Niente tempo per contare: fidati dell'istinto. ${TRIALS} sfide.
+        </p>
+        <button class="btn btn-big" data-start>▶️ Inizia</button>
+      </div>`;
+    container.querySelector("[data-start]").addEventListener("click", start);
+  }
+
+  function nuvola(el, n) {
+    el.innerHTML = "";
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement("span");
+      d.className = "stima-dot";
+      d.style.left = 8 + Math.random() * 84 + "%";
+      d.style.top = 8 + Math.random() * 84 + "%";
+      el.appendChild(d);
+    }
+  }
+
+  function start() {
+    let trial = 0, giuste = 0, attesa = false, lati = null, timeoutId = null;
+    App.addCleanup(() => clearTimeout(timeoutId));
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Sfida: <span data-prog>1/${TRIALS}</span></div>
+        <div class="hud-item">✅ <span data-ok>0</span></div>
+      </div>
+      <p class="game-msg" data-msg>Chi ne ha di più?</p>
+      <div class="stima-boards">
+        <button class="stima-board" data-lato="sx" aria-label="Lato sinistro"><div class="stima-area" data-area-sx></div></button>
+        <button class="stima-board" data-lato="dx" aria-label="Lato destro"><div class="stima-area" data-area-dx></div></button>
+      </div>`;
+
+    const elSx = container.querySelector("[data-area-sx]");
+    const elDx = container.querySelector("[data-area-dx]");
+    const elMsg = container.querySelector("[data-msg]");
+    const elProg = container.querySelector("[data-prog]");
+    const elOk = container.querySelector("[data-ok]");
+
+    function prossima() {
+      if (trial >= TRIALS) return fine();
+      elProg.textContent = `${trial + 1}/${TRIALS}`;
+      // rapporti sempre più difficili man mano che avanzi (da 2:1 a ~10:9)
+      const base = 8 + Math.floor(Math.random() * 15);
+      const rapporto = trial < 4 ? 1.7 : trial < 8 ? 1.35 : 1.18;
+      const altro = Math.max(base + 2, Math.round(base * rapporto));
+      const sxMaggiore = Math.random() < 0.5;
+      lati = { sx: sxMaggiore ? altro : base, dx: sxMaggiore ? base : altro };
+      nuvola(elSx, lati.sx);
+      nuvola(elDx, lati.dx);
+      attesa = true;
+      elMsg.textContent = "Guarda… 👀";
+      // dopo 1.5 secondi i pallini spariscono: si risponde a memoria
+      timeoutId = setTimeout(() => {
+        elSx.innerHTML = ""; elDx.innerHTML = "";
+        elMsg.textContent = "Quale lato ne aveva di più?";
+      }, 1500);
+    }
+
+    container.querySelectorAll("[data-lato]").forEach(b => b.addEventListener("click", () => {
+      if (!attesa) return;
+      attesa = false;
+      clearTimeout(timeoutId);
+      const scelto = b.dataset.lato;
+      const giusto = lati.sx === lati.dx ? scelto : (lati.sx > lati.dx ? "sx" : "dx");
+      if (scelto === giusto) {
+        giuste++; elOk.textContent = giuste;
+        elMsg.textContent = `Giusto! ${lati.sx} contro ${lati.dx} ✨`;
+        App.beep(700, 0.06);
+      } else {
+        elMsg.textContent = `Erano ${lati.sx} contro ${lati.dx} 😅`;
+        App.beep(180, 0.1);
+      }
+      trial++;
+      timeoutId = setTimeout(prossima, 900);
+    }));
+
+    function fine() {
+      const isRecord = DB.submitScore("stima", "Colpo d'occhio", giuste, "high");
+      gameOverCard(container, {
+        emoji: giuste >= TRIALS * 0.8 ? "🦅" : "👁️",
+        titolo: giuste >= TRIALS * 0.8 ? "Occhio di falco!" : "Il colpo d'occhio si allena!",
+        righe: [`Risposte giuste: <strong>${giuste}/${TRIALS}</strong>`],
+        isRecord, replay: start,
+      });
+    }
+
+    prossima();
+  }
+
+  menu();
+}
+
+/* ============================================================
+   10) PERCORSO DI BLOCCHI (compito di Corsi)
+   ============================================================ */
+function renderCorsi(container) {
+  function start() {
+    let seq = [], pos = 0, accetta = false, span = 0;
+    let timeouts = [];
+    App.addCleanup(() => timeouts.forEach(clearTimeout));
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">Lunghezza: <span data-span>0</span></div>
+        <div class="hud-item">Record: <span>${DB.state.stats.bestScores.corsi?.value ?? "—"}</span></div>
+      </div>
+      <p class="game-msg" data-msg>Guarda il percorso, poi rifallo!</p>
+      <div class="corsi-grid" data-grid></div>
+      <div class="btn-row" style="justify-content:center; margin-top:1.2rem">
+        <button class="btn btn-big" data-go>▶️ Inizia</button>
+      </div>`;
+
+    const grid = container.querySelector("[data-grid]");
+    const elMsg = container.querySelector("[data-msg]");
+    const elSpan = container.querySelector("[data-span]");
+    const btnGo = container.querySelector("[data-go]");
+
+    const celle = Array.from({ length: 9 }, (_, i) => {
+      const b = document.createElement("button");
+      b.className = "corsi-cell";
+      b.disabled = true;
+      b.setAttribute("aria-label", `Blocco ${i + 1}`);
+      b.addEventListener("click", () => tap(i, b));
+      grid.appendChild(b);
+      return b;
+    });
+
+    function accendi(i, dur = 450) {
+      celle[i].classList.add("lit");
+      App.beep(360 + i * 40, dur / 1000);
+      timeouts.push(setTimeout(() => celle[i].classList.remove("lit"), dur));
+    }
+
+    function nuovaSequenza() {
+      // sequenza senza ripetizioni consecutive
+      const len = span + 2; // si parte da 2 blocchi
+      seq = [];
+      while (seq.length < len) {
+        const c = Math.floor(Math.random() * 9);
+        if (seq[seq.length - 1] !== c) seq.push(c);
+      }
+      mostra();
+    }
+
+    function mostra() {
+      accetta = false;
+      celle.forEach(c => (c.disabled = true));
+      elMsg.textContent = "Osserva il percorso… 👀";
+      seq.forEach((idx, i) => {
+        timeouts.push(setTimeout(() => {
+          accendi(idx);
+          if (i === seq.length - 1) {
+            timeouts.push(setTimeout(() => {
+              accetta = true; pos = 0;
+              celle.forEach(c => (c.disabled = false));
+              elMsg.textContent = "Tocca a te: rifai il percorso! 🎯";
+            }, 550));
+          }
+        }, 500 + i * 650));
+      });
+    }
+
+    function tap(i, el) {
+      if (!accetta) return;
+      accendi(i, 250);
+      if (i === seq[pos]) {
+        pos++;
+        if (pos === seq.length) {
+          accetta = false;
+          span++;
+          elSpan.textContent = seq.length;
+          elMsg.textContent = "Perfetto! Percorso più lungo… ✨";
+          timeouts.push(setTimeout(nuovaSequenza, 1000));
+        }
+      } else {
+        accetta = false;
+        App.beep(140, 0.4);
+        const raggiunto = span > 0 ? span + 1 : 0; // lunghezza massima completata
+        const isRecord = raggiunto > 0 && DB.submitScore("corsi", "Percorso di blocchi", raggiunto, "high");
+        gameOverCard(container, {
+          emoji: raggiunto >= 6 ? "🧠" : "🟪",
+          titolo: "Percorso interrotto!",
+          righe: [`Percorso più lungo completato: <strong>${raggiunto || "—"} blocchi</strong>`,
+            `<span style="font-size:.9rem; color:var(--text-soft)">La media degli adulti nel compito di Corsi è 5-6 blocchi.</span>`],
+          isRecord, replay: start,
+        });
+      }
+    }
+
+    btnGo.addEventListener("click", () => { btnGo.remove(); nuovaSequenza(); });
+  }
+
+  start();
+}
+
+/* ============================================================
+   11) SEMAFORO (go/no-go)
+   ============================================================ */
+function renderGonogo(container) {
+  const DURATA = 45;
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Semaforo</h2>
+        <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
+          <strong>🟢 verde → PREMI</strong> il pulsante, più veloce che puoi.<br>
+          <strong>🔴 rosso → FERMO</strong>: non premere niente.<br>
+          Il rosso arriva quando meno te lo aspetti. ${DURATA} secondi.
+        </p>
+        <button class="btn btn-big" data-start>▶️ Inizia</button>
+      </div>`;
+    container.querySelector("[data-start]").addEventListener("click", start);
+  }
+
+  function start() {
+    let hits = 0, falsi = 0, mancati = 0, resta = DURATA;
+    let corrente = null, risposto = false;
+    let timeouts = [];
+    App.addCleanup(() => timeouts.forEach(clearTimeout));
+
+    container.innerHTML = `
+      <div class="game-hud">
+        <div class="hud-item">✅ <span data-ok>0</span></div>
+        <div class="hud-item">🚫 Falsi: <span data-falsi>0</span></div>
+        <div class="hud-item">💤 Persi: <span data-persi>0</span></div>
+        <div class="hud-item">⏱ <span data-tempo>${DURATA}s</span></div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="flow-stim" data-stim style="min-height:7rem"></div>
+        <button class="btn btn-big btn-accent" data-premi style="font-size:1.4rem; padding:1.1rem 3rem">PREMI!</button>
+      </div>`;
+
+    const elStim = container.querySelector("[data-stim]");
+    const elOk = container.querySelector("[data-ok]");
+    const elFalsi = container.querySelector("[data-falsi]");
+    const elPersi = container.querySelector("[data-persi]");
+    const elTempo = container.querySelector("[data-tempo]");
+    const btn = container.querySelector("[data-premi]");
+
+    function prossimo() {
+      if (resta <= 0) return;
+      // 70% verde (go), 30% rosso (no-go)
+      corrente = Math.random() < 0.7 ? "go" : "nogo";
+      risposto = false;
+      elStim.textContent = corrente === "go" ? "🟢" : "🔴";
+      timeouts.push(setTimeout(() => {
+        if (corrente === "go" && !risposto) {
+          mancati++; elPersi.textContent = mancati;
+        }
+        corrente = null;
+        elStim.textContent = "";
+        timeouts.push(setTimeout(prossimo, 250 + Math.random() * 350));
+      }, 750));
+    }
+
+    btn.addEventListener("click", () => {
+      if (!corrente || risposto) return;
+      risposto = true;
+      if (corrente === "go") {
+        hits++; elOk.textContent = hits; App.beep(700, 0.05);
+      } else {
+        falsi++; elFalsi.textContent = falsi; App.beep(160, 0.15);
+      }
+    });
+
+    const timer = setInterval(() => {
+      resta--;
+      elTempo.textContent = `${resta}s`;
+      if (resta <= 0) {
+        clearInterval(timer);
+        const punteggio = Math.max(hits - falsi, 0);
+        const isRecord = DB.submitScore("gonogo", "Semaforo", punteggio, "high");
+        gameOverCard(container, {
+          emoji: falsi <= 1 ? "🧘" : "🚦",
+          titolo: falsi <= 1 ? "Freno di ferro!" : "Tempo scaduto!",
+          righe: [
+            `Verdi presi: <strong>${hits}</strong> · Persi: <strong>${mancati}</strong>`,
+            `Partenze false sul rosso: <strong>${falsi}</strong>`,
+            `Punteggio: <strong>${punteggio}</strong>`,
+          ],
+          isRecord, replay: start,
+        });
+      }
+    }, 1000);
+    App.addCleanup(() => clearInterval(timer));
+
+    prossimo();
   }
 
   menu();

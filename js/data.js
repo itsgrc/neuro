@@ -282,6 +282,8 @@ const BADGES = [
   { id: "primo-giorno-percorso", emoji: "🎓", nome: "In cammino", desc: "Primo giorno di un percorso completato" },
   { id: "percorso-completo", emoji: "🏔️", nome: "Vetta raggiunta", desc: "Un percorso di 7 giorni completato" },
   { id: "signore-tempo", emoji: "⏱️", nome: "Signore del tempo", desc: "Errore medio sotto il 10% in Un minuto esatto" },
+  { id: "primo-allenamento", emoji: "🏋️", nome: "Palestra aperta", desc: "Primo allenamento del giorno completato" },
+  { id: "atleta-mente", emoji: "🏅", nome: "Atleta della mente", desc: "7 allenamenti del giorno completati" },
 ];
 
 /* ============================================================
@@ -344,6 +346,12 @@ const FONTI = [
   { id: "gross1998",      testo: "Gross, J. J. (1998). The emerging field of emotion regulation: An integrative review. <em>Review of General Psychology</em>, 2(3), 271–299." },
   { id: "wood2018",       testo: "Wood, S. G., Moxley, J. H., Tighe, E. L., & Wagner, R. K. (2018). Does use of text-to-speech and related read-aloud tools improve reading comprehension for students with reading disabilities? A meta-analysis. <em>Journal of Learning Disabilities</em>, 51(1), 73–84." },
   { id: "denheijer2017",  testo: "Den Heijer, A. E., et al. (2017). Sweat it out? The effects of physical exercise on cognition and behavior in children and adults with ADHD: A systematic literature review. <em>Journal of Neural Transmission</em>, 124(S1), 3–26." },
+  { id: "cepeda2006",     testo: "Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T., & Rohrer, D. (2006). Distributed practice in verbal recall tasks: A review and quantitative synthesis. <em>Psychological Bulletin</em>, 132(3), 354–380." },
+  { id: "halberda2008",   testo: "Halberda, J., Mazzocco, M. M. M., & Feigenson, L. (2008). Individual differences in non-verbal number acuity correlate with maths achievement. <em>Nature</em>, 455(7213), 665–668." },
+  { id: "kessels2000",    testo: "Kessels, R. P. C., van Zandvoort, M. J. E., Postma, A., Kappelle, L. J., & de Haan, E. H. F. (2000). The Corsi Block-Tapping Task: Standardization and normative data. <em>Applied Neuropsychology</em>, 7(4), 252–258." },
+  { id: "verbruggen2008", testo: "Verbruggen, F., & Logan, G. D. (2008). Response inhibition in the stop-signal paradigm. <em>Trends in Cognitive Sciences</em>, 12(11), 418–424." },
+  { id: "khoury2013",     testo: "Khoury, B., et al. (2013). Mindfulness-based therapy: A comprehensive meta-analysis. <em>Clinical Psychology Review</em>, 33(6), 763–771." },
+  { id: "seligman2005",   testo: "Seligman, M. E. P., Steen, T. A., Park, N., & Peterson, C. (2005). Positive psychology progress: Empirical validation of interventions. <em>American Psychologist</em>, 60(5), 410–421." },
 ];
 
 /* Fonti principali per ogni scheda della sezione Risorse */
@@ -459,6 +467,31 @@ const SCHEDE_SCIENZA = {
     nd: ["autismo", "ansia"],
     perche: "Durante uno shutdown o un sovraccarico, il canale verbale può chiudersi davvero: non è capriccio, è neurologia (Lord et al., 2018). Preparare in anticipo un messaggio e dei bisogni da indicare è un principio base della Comunicazione Aumentativa e Alternativa (Beukelman & Mirenda, 2013): quando le parole non escono, la carta parla per te.",
     fonti: ["beukelman2013", "lord2018"],
+  },
+  stima: {
+    nd: ["dsa"],
+    perche: "Tutti nasciamo con un “senso del numero”: la capacità di stimare quantità a colpo d'occhio, senza contare. La sua precisione correla con le abilità matematiche (Halberda et al., 2008, pubblicato su Nature) ed è spesso più debole nella discalculia (Butterworth et al., 2011). Qui lo eserciti in sicurezza: niente calcoli, niente voti — solo il tuo colpo d'occhio che si affina.",
+    fonti: ["halberda2008", "butterworth2011"],
+  },
+  corsi: {
+    nd: ["adhd", "dsa"],
+    perche: "Questo gioco è la versione digitale del compito di Corsi, uno dei test di memoria spaziale più usati in neuropsicologia da cinquant'anni (Kessels et al., 2000). La memoria visuo-spaziale lavora insieme a quella verbale ed è tra le componenti spesso fragili nell'ADHD e nei DSA (Martinussen et al., 2005): allenarla in forma di gioco la rende un po' meno estranea.",
+    fonti: ["kessels2000", "martinussen2005"],
+  },
+  gonogo: {
+    nd: ["adhd", "tourette"],
+    perche: "Il paradigma go/no-go è lo standard dei laboratori per misurare l'inibizione della risposta: agire quando serve, fermarsi quando non serve (Verbruggen & Logan, 2008). È la funzione al centro dei modelli dell'ADHD (Barkley, 1997) e coinvolta nel controllo dei tic. Qui il “no” diventa un gesto allenabile: non premere è la mossa vincente.",
+    fonti: ["verbruggen2008", "barkley1997"],
+  },
+  bodyscan: {
+    nd: ["ansia", "autismo"],
+    perche: "La scansione corporea è uno degli esercizi centrali dei protocolli mindfulness, la cui efficacia su ansia e stress è documentata da meta-analisi (Khoury et al., 2013). Portare l'attenzione nel corpo, una zona alla volta, allena l'interocezione — sentire i propri segnali interni — che per molte persone (neurodivergenti e non) è la base per accorgersi in tempo di fame, stanchezza e sovraccarico.",
+    fonti: ["khoury2013", "zaccaro2018"],
+  },
+  gratitudine: {
+    nd: ["ansia"],
+    perche: "“Tre cose buone” è uno degli esercizi più studiati della psicologia positiva: annotare ogni sera tre cose andate bene ha mostrato effetti misurabili su benessere e umore in studi controllati (Seligman et al., 2005; Emmons & McCullough, 2003). Non serve fingere ottimismo: serve dare al positivo lo stesso tempo di attenzione che il cervello dà gratis al negativo.",
+    fonti: ["seligman2005", "emmons2003"],
   },
 };
 
