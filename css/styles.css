@@ -588,6 +588,50 @@ label { font-weight: 700; font-size: .92rem; }
 .dump-note button { border: none; background: transparent; font-size: 1rem; min-width: 34px; min-height: 34px; border-radius: 8px; }
 .dump-note button:hover { background: rgba(0,0,0,.08); }
 
+/* ---------- Basi scientifiche: chip, filtri, fonti ---------- */
+.nd-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+.tile .nd-chips { margin-top: auto; padding-top: .45rem; }
+.nd-chip {
+  font-size: .72rem; font-weight: 700; padding: .14rem .6rem;
+  border-radius: 999px; background: var(--bg-soft); color: var(--text-soft);
+  white-space: nowrap;
+}
+.nd-adhd { background: var(--gold-soft); color: var(--gold); }
+.nd-autismo { background: var(--primary-soft); color: var(--primary); }
+.nd-dsa { background: var(--blue-soft); color: var(--blue); }
+.nd-ansia { background: var(--accent-soft); color: var(--accent); }
+.nd-tourette { background: var(--pink-soft); color: var(--pink); }
+
+.nd-filter-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.2rem; }
+.nd-filter {
+  border: 2px solid var(--border); background: var(--bg-card);
+  border-radius: 999px; padding: .45rem .95rem; font-weight: 700;
+  color: var(--text-soft); transition: border-color var(--anim), background var(--anim), color var(--anim);
+}
+.nd-filter:hover { border-color: var(--primary); color: var(--text); }
+.nd-filter.active { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
+
+.science-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 5px solid var(--blue); border-radius: var(--radius-s);
+  padding: .8rem 1.1rem; margin-bottom: 1.2rem;
+}
+.science-box summary { cursor: pointer; font-weight: 800; color: var(--blue); padding: .2rem 0; }
+.science-box .science-body { color: var(--text-soft); font-size: .93rem; margin: .6rem 0; }
+.science-box .fonti-mini { font-size: .8rem; color: var(--text-soft); padding-left: 1.1rem; margin: .5rem 0; }
+.science-box .fonti-mini li { margin-bottom: .3rem; }
+.science-box .nd-chips { margin-bottom: .5rem; }
+
+.honesty-box {
+  background: var(--primary-soft); border: 1px solid var(--primary);
+  border-radius: var(--radius); padding: 1.2rem 1.4rem; margin-bottom: 1.4rem;
+}
+.honesty-box h3 { color: var(--primary); margin-bottom: .4rem; }
+.honesty-box p { font-size: .95rem; }
+.biblio { padding-left: 1.4rem; }
+.biblio li { margin-bottom: .55rem; color: var(--text-soft); font-size: .9rem; line-height: 1.5; }
+.res-fonti { font-size: .82rem; }
+
 /* ---------- Risorse ---------- */
 .res-card { border-top: 6px solid var(--primary); }
 .res-card h3 { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }

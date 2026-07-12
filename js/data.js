@@ -280,3 +280,159 @@ const BADGES = [
   { id: "umore-7", emoji: "📈", nome: "Mi conosco", desc: "Umore registrato per 7 giorni" },
   { id: "abitudine-7", emoji: "💪", nome: "Abitudine di ferro", desc: "Un'abitudine mantenuta 7 giorni di fila" },
 ];
+
+/* ============================================================
+   Basi scientifiche
+   Ogni gioco e strumento è collegato alle neurodivergenze per
+   cui è più utile e alla letteratura che ne descrive il
+   meccanismo. Citazioni verificate e verificabili.
+   ============================================================ */
+
+const ND_INFO = {
+  adhd:     { emoji: "⚡",  nome: "ADHD",             classe: "nd-adhd" },
+  autismo:  { emoji: "♾️", nome: "Autismo",          classe: "nd-autismo" },
+  dsa:      { emoji: "📖", nome: "DSA",              classe: "nd-dsa" },
+  ansia:    { emoji: "🌊", nome: "Ansia ed emozioni", classe: "nd-ansia" },
+  tourette: { emoji: "🌀", nome: "Tourette",         classe: "nd-tourette" },
+};
+
+const FONTI = [
+  { id: "stroop1935",     testo: "Stroop, J. R. (1935). Studies of interference in serial verbal reactions. <em>Journal of Experimental Psychology</em>, 18(6), 643–662." },
+  { id: "kirchner1958",   testo: "Kirchner, W. K. (1958). Age differences in short-term retention of rapidly changing information. <em>Journal of Experimental Psychology</em>, 55(4), 352–358." },
+  { id: "barkley1997",    testo: "Barkley, R. A. (1997). Behavioral inhibition, sustained attention, and executive functions: Constructing a unifying theory of ADHD. <em>Psychological Bulletin</em>, 121(1), 65–94." },
+  { id: "faraone2021",    testo: "Faraone, S. V., et al. (2021). The World Federation of ADHD International Consensus Statement: 208 evidence-based conclusions about the disorder. <em>Neuroscience & Biobehavioral Reviews</em>, 128, 789–818." },
+  { id: "lord2018",       testo: "Lord, C., Elsabbagh, M., Baird, G., & Veenstra-Vanderweele, J. (2018). Autism spectrum disorder. <em>The Lancet</em>, 392(10146), 508–520." },
+  { id: "peterson2012",   testo: "Peterson, R. L., & Pennington, B. F. (2012). Developmental dyslexia. <em>The Lancet</em>, 379(9830), 1997–2007." },
+  { id: "butterworth2011",testo: "Butterworth, B., Varma, S., & Laurillard, D. (2011). Dyscalculia: From brain to education. <em>Science</em>, 332(6033), 1049–1053." },
+  { id: "piacentini2010", testo: "Piacentini, J., et al. (2010). Behavior therapy for children with Tourette disorder: A randomized controlled trial. <em>JAMA</em>, 303(19), 1929–1937." },
+  { id: "shaw2014",       testo: "Shaw, P., Stringaris, A., Nigg, J., & Leibenluft, E. (2014). Emotion dysregulation in attention deficit hyperactivity disorder. <em>American Journal of Psychiatry</em>, 171(3), 276–293." },
+  { id: "martinussen2005",testo: "Martinussen, R., Hayden, J., Hogg-Johnson, S., & Tannock, R. (2005). A meta-analysis of working memory impairments in children with attention-deficit/hyperactivity disorder. <em>Journal of the American Academy of Child & Adolescent Psychiatry</em>, 44(4), 377–384." },
+  { id: "kofler2013",     testo: "Kofler, M. J., et al. (2013). Reaction time variability in ADHD: A meta-analytic review of 319 studies. <em>Clinical Psychology Review</em>, 33(6), 795–811." },
+  { id: "soderlund2007",  testo: "Söderlund, G., Sikström, S., & Smart, A. (2007). Listen to the noise: Noise is beneficial for cognitive performance in ADHD. <em>Journal of Child Psychology and Psychiatry</em>, 48(8), 840–847." },
+  { id: "jaeggi2008",     testo: "Jaeggi, S. M., Buschkuehl, M., Jonides, J., & Perrig, W. J. (2008). Improving fluid intelligence with training on working memory. <em>PNAS</em>, 105(19), 6829–6833." },
+  { id: "melby2013",      testo: "Melby-Lervåg, M., & Hulme, C. (2013). Is working memory training effective? A meta-analytic review. <em>Developmental Psychology</em>, 49(2), 270–291." },
+  { id: "simons2016",     testo: "Simons, D. J., et al. (2016). Do “brain-training” programs work? <em>Psychological Science in the Public Interest</em>, 17(3), 103–186." },
+  { id: "gollwitzer1999", testo: "Gollwitzer, P. M. (1999). Implementation intentions: Strong effects of simple plans. <em>American Psychologist</em>, 54(7), 493–503." },
+  { id: "lally2010",      testo: "Lally, P., van Jaarsveld, C. H. M., Potts, H. W. W., & Wardle, J. (2010). How are habits formed: Modelling habit formation in the real world. <em>European Journal of Social Psychology</em>, 40(6), 998–1009." },
+  { id: "lieberman2007",  testo: "Lieberman, M. D., et al. (2007). Putting feelings into words: Affect labeling disrupts amygdala activity in response to affective stimuli. <em>Psychological Science</em>, 18(5), 421–428." },
+  { id: "pennebaker1997", testo: "Pennebaker, J. W. (1997). Writing about emotional experiences as a therapeutic process. <em>Psychological Science</em>, 8(3), 162–166." },
+  { id: "borkovec1983",   testo: "Borkovec, T. D., Wilkinson, L., Folensbee, R., & Lerman, C. (1983). Stimulus control applications to the treatment of worry. <em>Behaviour Research and Therapy</em>, 21(3), 247–251." },
+  { id: "zaccaro2018",    testo: "Zaccaro, A., et al. (2018). How breath-control can change your life: A systematic review on psycho-physiological correlates of slow breathing. <em>Frontiers in Human Neuroscience</em>, 12." },
+  { id: "lehrer2014",     testo: "Lehrer, P. M., & Gevirtz, R. (2014). Heart rate variability biofeedback: How and why does it work? <em>Frontiers in Psychology</em>, 5." },
+  { id: "iyengar2000",    testo: "Iyengar, S. S., & Lepper, M. R. (2000). When choice is demotivating: Can one desire too much of a good thing? <em>Journal of Personality and Social Psychology</em>, 79(6), 995–1006." },
+  { id: "mesibov2005",    testo: "Mesibov, G. B., Shea, V., & Schopler, E. (2005). <em>The TEACCH Approach to Autism Spectrum Disorders</em>. Springer." },
+  { id: "hull2017",       testo: "Hull, L., et al. (2017). “Putting on my best normal”: Social camouflaging in adults with autism spectrum conditions. <em>Journal of Autism and Developmental Disorders</em>, 47(8), 2519–2534." },
+  { id: "kapp2019",       testo: "Kapp, S. K., et al. (2019). “People should be allowed to do what they like”: Autistic adults' views and experiences of stimming. <em>Autism</em>, 23(7), 1782–1792." },
+  { id: "najavits2002",   testo: "Najavits, L. M. (2002). <em>Seeking Safety: A Treatment Manual for PTSD and Substance Abuse</em>. Guilford Press." },
+  { id: "volkow2009",     testo: "Volkow, N. D., et al. (2009). Evaluating dopamine reward pathway in ADHD: Clinical implications. <em>JAMA</em>, 302(10), 1084–1091." },
+  { id: "knouse2010",     testo: "Knouse, L. E., & Safren, S. A. (2010). Current status of cognitive behavioral therapy for adult attention-deficit hyperactivity disorder. <em>Psychiatric Clinics of North America</em>, 33(3), 497–509." },
+  { id: "gathercole2008", testo: "Gathercole, S. E., & Alloway, T. P. (2008). <em>Working Memory and Learning: A Practical Guide for Teachers</em>. Sage." },
+  { id: "cirillo2018",    testo: "Cirillo, F. (2018). <em>The Pomodoro Technique: The Life-Changing Time-Management System</em>. Virgin Books." },
+  { id: "legge170",       testo: "Legge 8 ottobre 2010, n. 170 — “Nuove norme in materia di disturbi specifici di apprendimento in ambito scolastico” (Italia)." },
+];
+
+/* Fonti principali per ogni scheda della sezione Risorse */
+const FONTI_CONDIZIONI = {
+  "adhd":         ["faraone2021", "barkley1997", "volkow2009", "shaw2014"],
+  "autismo":      ["lord2018", "hull2017", "kapp2019", "mesibov2005"],
+  "dislessia":    ["peterson2012", "legge170"],
+  "discalculia":  ["butterworth2011", "legge170"],
+  "disgrafia":    ["legge170", "gathercole2008"],
+  "tourette":     ["piacentini2010"],
+  "dsa-generale": ["barkley1997", "gollwitzer1999", "gathercole2008", "knouse2010"],
+  "ansia-nd":     ["shaw2014", "lieberman2007", "zaccaro2018"],
+};
+
+/* Scheda scientifica di ogni gioco e strumento:
+   nd    = neurodivergenze per cui è più indicato
+   perche = meccanismo, spiegato in modo onesto
+   fonti = riferimenti in bibliografia */
+const SCHEDE_SCIENZA = {
+  /* --- giochi --- */
+  memoria: {
+    nd: ["adhd", "dsa"],
+    perche: "La memoria di lavoro — tenere informazioni in mente mentre le usi — è spesso ridotta nell'ADHD (Martinussen et al., 2005) ed è centrale nelle difficoltà di apprendimento (Gathercole & Alloway, 2008). Questo gioco la esercita in modo giocoso e ti fa vedere, partita dopo partita, come varia con stanchezza e stress. Onestà: l'allenamento migliora soprattutto il compito che alleni — usalo come palestra e termometro, non come cura.",
+    fonti: ["martinussen2005", "gathercole2008", "melby2013"],
+  },
+  stroop: {
+    nd: ["adhd", "tourette"],
+    perche: "Il compito di Stroop (Stroop, 1935) misura il controllo inibitorio: la capacità di frenare la risposta automatica (leggere la parola) per dare quella richiesta (nominare il colore). L'inibizione è al centro dei modelli scientifici dell'ADHD (Barkley, 1997) ed è la stessa abilità coinvolta nella gestione dei tic, allenata da terapie come la CBIT (Piacentini et al., 2010).",
+    fonti: ["stroop1935", "barkley1997", "piacentini2010"],
+  },
+  riflessi: {
+    nd: ["adhd"],
+    perche: "Nell'ADHD i tempi di reazione non sono tanto più lenti quanto più variabili: momenti brillanti alternati a “vuoti” di attenzione. Questa variabilità è uno dei reperti più solidi della ricerca (Kofler et al., 2013, meta-analisi su 319 studi). Qui misuri media e oscillazioni: conoscere il proprio ritmo è il primo passo per lavorarci insieme, non contro.",
+    fonti: ["kofler2013", "faraone2021"],
+  },
+  simon: {
+    nd: ["adhd", "dsa"],
+    perche: "Ripetere sequenze crescenti impegna la memoria di lavoro sequenziale e l'attenzione sostenuta, funzioni spesso fragili nell'ADHD e nei DSA (Martinussen et al., 2005; Gathercole & Alloway, 2008). Colori e suoni insieme sfruttano la codifica multisensoriale: più canali usi, più tracce lasci in memoria.",
+    fonti: ["martinussen2005", "gathercole2008"],
+  },
+  numeri: {
+    nd: ["adhd"],
+    perche: "Le tabelle di Schulte sono un classico esercizio di scansione visiva e attenzione selettiva: trovare un bersaglio ignorando i distrattori — la stessa abilità che usi per trovare le chiavi su una scrivania piena. L'attenzione sostenuta su compiti poco stimolanti è tra le aree più studiate dell'ADHD (Barkley, 1997; Faraone et al., 2021).",
+    fonti: ["barkley1997", "faraone2021"],
+  },
+  flusso: {
+    nd: ["adhd", "dsa"],
+    perche: "L'n-back (Kirchner, 1958) è il paradigma più usato nella ricerca sulla memoria di lavoro, resa famosa dallo studio di Jaeggi et al. (2008) sull'intelligenza fluida. La scienza però è divisa: le meta-analisi mostrano che i benefici si trasferiscono poco fuori dal compito (Melby-Lervåg & Hulme, 2013; Simons et al., 2016). Prendilo come una sfida stimolante, non come una promessa.",
+    fonti: ["kirchner1958", "jaeggi2008", "melby2013", "simons2016"],
+  },
+  /* --- strumenti --- */
+  pomodoro: {
+    nd: ["adhd", "dsa"],
+    perche: "L'ADHD comporta spesso “cecità al tempo”: l'orologio interno è poco affidabile e il tempo o vola o non passa mai (Barkley, 1997). Un timer visibile rende il tempo esterno e concreto (tecnica del Pomodoro: Cirillo, 2018), e i blocchi brevi con pause programmate rispettano l'attenzione fluttuante invece di combatterla. Utile anche nello studio con DSA, dove la fatica cognitiva cresce in fretta.",
+    fonti: ["barkley1997", "cirillo2018", "knouse2010"],
+  },
+  attivita: {
+    nd: ["adhd", "autismo"],
+    perche: "Limitare le priorità a 3 riduce il sovraccarico da scelta, e trasformare “devo studiare” in un passo piccolo e concreto sfrutta le implementation intentions, uno degli effetti più replicati della psicologia (Gollwitzer, 1999). Per l'ADHD le strutture esterne funzionano più della forza di volontà (Knouse & Safren, 2010); per le persone autistiche una lista chiara e prevedibile abbassa l'ansia da indeterminatezza.",
+    fonti: ["gollwitzer1999", "knouse2010", "iyengar2000"],
+  },
+  dump: {
+    nd: ["adhd", "ansia"],
+    perche: "Scrivere i pensieri li scarica dalla memoria di lavoro, che nell'ADHD è una risorsa preziosa e limitata (Martinussen et al., 2005). Rimandare le preoccupazioni a un momento dedicato è una tecnica clinica validata contro la ruminazione (Borkovec et al., 1983), e mettere le esperienze in parole ha effetti benefici documentati (Pennebaker, 1997).",
+    fonti: ["borkovec1983", "pennebaker1997", "martinussen2005"],
+  },
+  abitudini: {
+    nd: ["adhd", "autismo"],
+    perche: "Le abitudini si formano ripetendo un gesto nello stesso contesto: in media 66 giorni, con enorme variabilità individuale — e saltare un giorno non azzera nulla (Lally et al., 2010). Il tracciamento visivo con serie 🔥 dà al cervello ADHD la ricompensa immediata di cui il suo sistema dopaminergico ha bisogno (Volkow et al., 2009). Per chi è autistico, le routine sono spesso già alleate naturali: qui diventano visibili.",
+    fonti: ["lally2010", "volkow2009"],
+  },
+  umore: {
+    nd: ["ansia", "adhd", "autismo"],
+    perche: "Dare un nome a ciò che provi (“affect labeling”) riduce l'attivazione dell'amigdala, il centro dell'allarme emotivo (Lieberman et al., 2007). La disregolazione emotiva è parte integrante dell'ADHD (Shaw et al., 2014) e molte persone autistiche faticano a riconoscere le proprie emozioni: un registro quotidiano di 5 secondi costruisce quella consapevolezza, un giorno alla volta.",
+    fonti: ["lieberman2007", "shaw2014"],
+  },
+  routine: {
+    nd: ["autismo", "adhd"],
+    perche: "Sapere che cosa viene dopo riduce carico cognitivo e ansia: la strutturazione visiva delle attività è il cuore di approcci validati per l'autismo come il TEACCH (Mesibov et al., 2005). Per l'ADHD, una routine guidata passo-passo aggira il blocco dell'avvio: non devi decidere niente, solo seguire il passo corrente (Knouse & Safren, 2010).",
+    fonti: ["mesibov2005", "knouse2010"],
+  },
+  decisioni: {
+    nd: ["adhd", "autismo", "ansia"],
+    perche: "Troppe opzioni paralizzano e tolgono soddisfazione anche dopo la scelta (Iyengar & Lepper, 2000). Le funzioni esecutive che servono per decidere si esauriscono con l'uso (Barkley, 1997): per le scelte a basso rischio — cosa mangiare, da dove iniziare — delegare al caso rompe lo stallo e conserva energia per le decisioni che contano davvero.",
+    fonti: ["iyengar2000", "barkley1997"],
+  },
+  suoni: {
+    nd: ["adhd", "autismo"],
+    perche: "Sembra un paradosso, ma un rumore di fondo moderato può migliorare memoria e attenzione nell'ADHD: il fenomeno della risonanza stocastica, per cui un cervello poco “attivato” lavora meglio con un po' di stimolazione costante (Söderlund et al., 2007). Per chi è autistico, un tappeto sonoro prevedibile può coprire stimoli improvvisi e faticosi (Lord et al., 2018).",
+    fonti: ["soderlund2007", "lord2018"],
+  },
+  respiro: {
+    nd: ["ansia", "autismo", "tourette"],
+    perche: "Respirare lentamente (circa 6 respiri al minuto) attiva il sistema parasimpatico e abbassa l'attivazione fisiologica: gli effetti su stress e attenzione sono documentati da revisioni sistematiche (Zaccaro et al., 2018; Lehrer & Gevirtz, 2014). Utile prima di un compito difficile, dopo un sovraccarico sensoriale, o quando i tic aumentano con lo stress (Piacentini et al., 2010).",
+    fonti: ["zaccaro2018", "lehrer2014", "piacentini2010"],
+  },
+  grounding: {
+    nd: ["ansia", "autismo"],
+    perche: "Il 5-4-3-2-1 àncora l'attenzione ai cinque sensi, interrompendo la spirale di ansia, ruminazione o sovraccarico sensoriale: è una tecnica di grounding standard nella clinica dell'ansia e del trauma (Najavits, 2002). Non ti chiede di calmarti — solo di notare ciò che c'è. Il corpo fa il resto.",
+    fonti: ["najavits2002", "zaccaro2018"],
+  },
+};
+
+const NOTA_SCIENZA = {
+  titolo: "La scienza, con onestà",
+  testo: "Ogni gioco e strumento di NeuroSpazio è costruito su meccanismi descritti nella letteratura scientifica: li trovi citati nelle schede “🔬 Per chi è pensato e perché funziona” e per esteso qui sotto. Un patto di onestà, però: i giochi cognitivi migliorano soprattutto la prestazione nel gioco stesso — il trasferimento alla vita quotidiana è dibattuto (Melby-Lervåg & Hulme, 2013; Simons et al., 2016). Usali come palestra, termometro dell'attenzione e fonte di dopamina buona. Gli strumenti (timer, liste, routine, respirazione, grounding) si basano invece su strategie con prove di efficacia clinica ed educativa consolidate. E in ogni caso: nessuna app sostituisce una valutazione e un supporto professionale.",
+};

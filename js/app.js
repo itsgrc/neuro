@@ -132,6 +132,49 @@ const App = (() => {
   /* ---------- viste ---------- */
   const main = document.getElementById("main");
 
+  /* filtri per neurodivergenza nelle pagine Giochi e Strumenti */
+  const filtroND = { giochi: "tutte", strumenti: "tutte" };
+
+  function ndChipsHTML(id) {
+    const sch = typeof SCHEDE_SCIENZA !== "undefined" && SCHEDE_SCIENZA[id];
+    if (!sch) return "";
+    return `<div class="nd-chips">${sch.nd.map(k => {
+      const n = ND_INFO[k];
+      return `<span class="nd-chip ${n.classe}">${n.emoji} ${n.nome}</span>`;
+    }).join("")}</div>`;
+  }
+
+  function scienceBoxHTML(id) {
+    const sch = typeof SCHEDE_SCIENZA !== "undefined" && SCHEDE_SCIENZA[id];
+    if (!sch) return "";
+    const fonti = sch.fonti.map(fid => FONTI.find(f => f.id === fid)).filter(Boolean);
+    return `
+      <div class="science-box">
+        ${ndChipsHTML(id)}
+        <details>
+          <summary>🔬 Per chi è pensato e perché funziona</summary>
+          <p class="science-body">${sch.perche}</p>
+          <ul class="fonti-mini">${fonti.map(f => `<li>${f.testo}</li>`).join("")}</ul>
+          <a href="#/risorse" style="font-size:.85rem; font-weight:700">📚 Tutta la bibliografia →</a>
+        </details>
+      </div>`;
+  }
+
+  function filterRowHTML(attivo) {
+    const opzioni = [["tutte", "✨ Per tutti"],
+      ...Object.entries(ND_INFO).map(([k, n]) => [k, `${n.emoji} ${n.nome}`])];
+    return `
+      <div class="nd-filter-row" role="group" aria-label="Filtra per neurodivergenza">
+        ${opzioni.map(([k, label]) =>
+          `<button class="nd-filter ${attivo === k ? "active" : ""}" data-filter="${k}" aria-pressed="${attivo === k}">${label}</button>`).join("")}
+      </div>`;
+  }
+
+  function filtra(items, f) {
+    if (f === "tutte") return items;
+    return items.filter(x => (SCHEDE_SCIENZA[x.id]?.nd || []).includes(f));
+  }
+
   function tileHTML(item, tipo) {
     return `
       <a class="tile" href="#/${tipo}/${item.id}">
@@ -139,6 +182,7 @@ const App = (() => {
         <h3>${item.nome}</h3>
         <p>${item.desc}</p>
         <span class="tile-tag tag-${item.tag}">${item.tag}</span>
+        ${ndChipsHTML(item.id)}
       </a>`;
   }
 
@@ -188,14 +232,22 @@ const App = (() => {
   }
 
   function viewGiochi() {
+    const f = filtroND.giochi;
+    const items = filtra(GAMES, f);
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
           <h1>🎮 Giochi</h1>
-          <p>Partite brevi che allenano attenzione, memoria e autocontrollo. Ogni partita conta per i tuoi badge, e i record restano salvati.</p>
+          <p>Partite brevi che allenano attenzione, memoria e autocontrollo. Le etichette dicono per quali neurodivergenze ogni gioco è più indicato — e in ogni gioco trovi il perché, con le fonti scientifiche.</p>
         </div>
-        <div class="grid grid-3">${GAMES.map(g => tileHTML(g, "gioco")).join("")}</div>
+        ${filterRowHTML(f)}
+        <div class="grid grid-3">${items.map(g => tileHTML(g, "gioco")).join("")}</div>
+        ${items.length === 0 ? `<p class="task-empty">Nessun gioco con questa etichetta (per ora!).</p>` : ""}
       </div>`;
+    main.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
+      filtroND.giochi = b.dataset.filter;
+      viewGiochi();
+    }));
   }
 
   function viewGioco(id) {
@@ -205,20 +257,29 @@ const App = (() => {
       <div class="view game-shell">
         <a class="back-link" href="#/giochi">← Tutti i giochi</a>
         <div class="page-head"><h1>${g.emoji} ${g.nome}</h1></div>
+        ${scienceBoxHTML(g.id)}
         <div data-game></div>
       </div>`;
     g.render(main.querySelector("[data-game]"));
   }
 
   function viewStrumenti() {
+    const f = filtroND.strumenti;
+    const items = filtra(TOOLS, f);
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
           <h1>🧰 Strumenti</h1>
-          <p>Aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi. Scegli quello che serve adesso.</p>
+          <p>Aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi. Filtra per neurodivergenza, e in ogni strumento scopri perché funziona, con le fonti.</p>
         </div>
-        <div class="grid grid-3">${TOOLS.map(t => tileHTML(t, "strumento")).join("")}</div>
+        ${filterRowHTML(f)}
+        <div class="grid grid-3">${items.map(t => tileHTML(t, "strumento")).join("")}</div>
+        ${items.length === 0 ? `<p class="task-empty">Nessuno strumento con questa etichetta (per ora!).</p>` : ""}
       </div>`;
+    main.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
+      filtroND.strumenti = b.dataset.filter;
+      viewStrumenti();
+    }));
   }
 
   function viewStrumento(id) {
@@ -228,6 +289,7 @@ const App = (() => {
       <div class="view game-shell" style="max-width:820px">
         <a class="back-link" href="#/strumenti">← Tutti gli strumenti</a>
         <div class="page-head"><h1>${t.emoji} ${t.nome}</h1></div>
+        ${scienceBoxHTML(t.id)}
         <div data-tool></div>
       </div>`;
     t.render(main.querySelector("[data-tool]"));
@@ -264,11 +326,19 @@ const App = (() => {
                 <summary>Strategie che aiutano</summary>
                 <ul>${c.strategie.map(p => `<li>${p}</li>`).join("")}</ul>
               </details>
+              ${(FONTI_CONDIZIONI[c.id] || []).length ? `
+              <details class="res-details">
+                <summary>📚 Fonti scientifiche</summary>
+                <ul class="res-fonti">${FONTI_CONDIZIONI[c.id]
+                  .map(fid => FONTI.find(f => f.id === fid))
+                  .filter(Boolean)
+                  .map(f => `<li>${f.testo}</li>`).join("")}</ul>
+              </details>` : ""}
             </article>`).join("")}
         </div>
 
         <h2 style="margin-bottom:.8rem">Guide pratiche per la vita vera</h2>
-        <div class="grid grid-2">
+        <div class="grid grid-2" style="margin-bottom:1.8rem">
           ${GUIDE_PRATICHE.map(g => `
             <article class="card res-card" style="border-top-color:var(--accent)">
               <h3><span aria-hidden="true">${g.emoji}</span> ${g.titolo}</h3>
@@ -276,6 +346,21 @@ const App = (() => {
                 ${g.consigli.map(c => `<li style="margin-bottom:.35rem">${c}</li>`).join("")}
               </ul>
             </article>`).join("")}
+        </div>
+
+        <h2 style="margin-bottom:.8rem">🔬 La scienza dietro NeuroSpazio</h2>
+        <div class="honesty-box">
+          <h3>🤝 ${NOTA_SCIENZA.titolo}</h3>
+          <p>${NOTA_SCIENZA.testo}</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:.6rem">📚 Bibliografia completa</h3>
+          <p style="color:var(--text-soft); font-size:.9rem; margin-bottom:.8rem">
+            Tutte le fonti citate nelle schede dei giochi, degli strumenti e delle neurodivergenze. Puoi cercarle per autore e anno su Google Scholar o PubMed per leggerle direttamente.
+          </p>
+          <ol class="biblio">
+            ${FONTI.map(f => `<li>${f.testo}</li>`).join("")}
+          </ol>
         </div>
       </div>`;
   }

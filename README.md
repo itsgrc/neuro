@@ -7,28 +7,35 @@ NeuroSpazio è una web app pensata per menti neurodivergenti (ADHD, autismo, DSA
 ## ✨ Cosa c'è dentro
 
 ### 🎮 6 giochi di allenamento cognitivo
-| Gioco | Cosa allena |
-|---|---|
-| 🃏 **Coppie di memoria** | Memoria di lavoro (3 difficoltà) |
-| 🌈 **Colore ribelle** (Stroop) | Controllo degli impulsi |
-| ⚡ **Scatto felino** | Tempi di reazione |
-| 🎵 **Sequenza luminosa** (Simon) | Memoria sequenziale, con suoni |
-| 🔍 **Caccia ai numeri** (Schulte) | Attenzione visiva |
-| 🌊 **Flusso** (n-back) | Memoria di lavoro avanzata |
+| Gioco | Cosa allena | Più indicato per | Base scientifica |
+|---|---|---|---|
+| 🃏 **Coppie di memoria** | Memoria di lavoro (3 difficoltà) | ⚡ ADHD · 📖 DSA | Martinussen et al., 2005; Gathercole & Alloway, 2008 |
+| 🌈 **Colore ribelle** (Stroop) | Controllo degli impulsi | ⚡ ADHD · 🌀 Tourette | Stroop, 1935; Barkley, 1997 |
+| ⚡ **Scatto felino** | Tempi di reazione e loro variabilità | ⚡ ADHD | Kofler et al., 2013 |
+| 🎵 **Sequenza luminosa** (Simon) | Memoria sequenziale multisensoriale | ⚡ ADHD · 📖 DSA | Martinussen et al., 2005 |
+| 🔍 **Caccia ai numeri** (Schulte) | Attenzione visiva selettiva | ⚡ ADHD | Barkley, 1997; Faraone et al., 2021 |
+| 🌊 **Flusso** (n-back) | Memoria di lavoro avanzata | ⚡ ADHD · 📖 DSA | Kirchner, 1958; Jaeggi et al., 2008 |
 
-Ogni gioco salva i record personali e sblocca badge. 🏆
+Ogni gioco salva i record personali, sblocca badge 🏆 e include una scheda **"🔬 Per chi è pensato e perché funziona"** con le fonti.
 
 ### 🧰 10 strumenti quotidiani
-- 🍅 **Timer di focus** (Pomodoro) con anello visivo e preset gentili
-- ✅ **Le mie attività** — massimo 3 cose per oggi, il resto in "Dopo"
-- 🧺 **Svuota la mente** — brain dump istantaneo, trasformabile in attività
-- 🔁 **Abitudini** — micro-abitudini con serie e griglia settimanale
-- 🌤️ **Come sto oggi** — registro dell'umore in 5 secondi, con storico
-- 🧭 **Routine guidate** — routine passo-passo col pilota automatico
-- 🎡 **Decidi per me** — ruota, moneta e dado contro la paralisi decisionale
-- 🎧 **Suoni per il focus** — rumore bianco/rosa/marrone e onde (Web Audio)
-- 🫁 **Respira con me** — respirazione guidata animata (4-4-4-4, 4-7-8, 5-5)
-- 🌍 **SOS sovraccarico** — grounding 5-4-3-2-1 per i momenti "è troppo"
+| Strumento | Più indicato per | Base scientifica |
+|---|---|---|
+| 🍅 **Timer di focus** (Pomodoro) | ⚡ ADHD · 📖 DSA | "Cecità al tempo": Barkley, 1997; Cirillo, 2018 |
+| ✅ **Le mie attività** (max 3 per oggi) | ⚡ ADHD · ♾️ Autismo | Implementation intentions: Gollwitzer, 1999 |
+| 🧺 **Svuota la mente** (brain dump) | ⚡ ADHD · 🌊 Ansia | Borkovec et al., 1983; Pennebaker, 1997 |
+| 🔁 **Abitudini** con serie 🔥 | ⚡ ADHD · ♾️ Autismo | Lally et al., 2010; Volkow et al., 2009 |
+| 🌤️ **Come sto oggi** (umore) | 🌊 Ansia · ⚡ ADHD · ♾️ Autismo | Affect labeling: Lieberman et al., 2007; Shaw et al., 2014 |
+| 🧭 **Routine guidate** passo-passo | ♾️ Autismo · ⚡ ADHD | TEACCH: Mesibov et al., 2005 |
+| 🎡 **Decidi per me** (anti-paralisi) | ⚡ ADHD · ♾️ Autismo · 🌊 Ansia | Choice overload: Iyengar & Lepper, 2000 |
+| 🎧 **Suoni per il focus** (Web Audio) | ⚡ ADHD · ♾️ Autismo | Risonanza stocastica: Söderlund et al., 2007 |
+| 🫁 **Respira con me** (4-4-4-4, 4-7-8, 5-5) | 🌊 Ansia · ♾️ Autismo · 🌀 Tourette | Zaccaro et al., 2018; Lehrer & Gevirtz, 2014 |
+| 🌍 **SOS sovraccarico** (grounding 5-4-3-2-1) | 🌊 Ansia · ♾️ Autismo | Najavits, 2002 |
+
+Nelle pagine Giochi e Strumenti puoi **filtrare per neurodivergenza** (ADHD, autismo, DSA, ansia/emozioni, Tourette).
+
+### 🔬 Basi scientifiche e onestà
+Ogni scheda cita fonti accademiche verificate (32 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
 
 ### 📚 Risorse
 Spiegazioni chiare e rispettose su ADHD, autismo, dislessia, discalculia, disgrafia, Tourette, funzioni esecutive ed emozioni intense, con strategie concrete, guide pratiche (studio, lavoro, casa, sonno, relazioni, autostima) e indicazioni su dove trovare aiuto in Italia.
