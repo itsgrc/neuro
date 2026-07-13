@@ -66,8 +66,16 @@ Micro-lezioni quotidiane con fonte scientifica + un'azione concreta al giorno:
 ### 📈 Insight personali e report per il professionista
 L'app calcola **solo sul tuo dispositivo** i tuoi schemi (fasce orarie d'oro, trend dell'umore, giorno migliore/peggiore della settimana) e genera un **report stampabile** da portare a psicologo, neuropsichiatra o medico — con nota metodologica sul self-monitoring (Korotitsch & Nelson-Gray, 1999). Non è uno strumento diagnostico.
 
+### 🧭 Inizia da qui (senza test) + 📋 Test di screening riconosciuti
+- **"Inizia da qui"** (in home e in `#/inizia`): scegli subito **per obiettivo** (rilassarmi, attivarmi, organizzarmi, allenare la mente, capire e imparare) o **per neurodivergenza/profilo** (ADHD, autismo, DSA, ansia, Tourette, genitore/insegnante) — nessun test richiesto, nessuna etichetta necessaria.
+- **3 questionari di screening ufficiali e riconosciuti** (in `#/test`), mai diagnostici:
+  - **ASRS v1.1** (parte A) — screening ADHD adulti sviluppato con l'OMS (Kessler et al., 2005)
+  - **AQ-10 adulti** — screening tratti autistici dell'Autism Research Centre di Cambridge (Allison, Auyeung & Baron-Cohen, 2012), usato anche dal NHS britannico
+  - **GAD-7** — il questionario più diffuso al mondo per lo screening dell'ansia generalizzata (Spitzer et al., 2006)
+- Ogni test mostra un **disclaimer esplicito prima e dopo** ("NON è una diagnosi"), è rivolto ai 18+, e il risultato collega direttamente a Risorse ("Dove trovare aiuto in Italia") ed esercizi indicati — mai un'etichetta clinica. Punteggi ed esiti restano solo sul dispositivo.
+
 ### 🔬 Basi scientifiche e onestà
-Ogni scheda cita fonti accademiche verificate (50 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
+Ogni scheda cita fonti accademiche verificate (53 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
 
 ### 📚 Risorse
 Spiegazioni chiare e rispettose su ADHD, autismo, dislessia, discalculia, disgrafia, Tourette, funzioni esecutive ed emozioni intense, con strategie concrete, guide pratiche (studio, lavoro, casa, sonno, relazioni, autostima) e indicazioni su dove trovare aiuto in Italia.

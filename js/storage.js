@@ -41,6 +41,7 @@ const DB = (() => {
     playedByDay: {},          // { "YYYY-MM-DD": [id dei giochi giocati] } per l'allenamento del giorno
     workoutDays: {},          // { "YYYY-MM-DD": true } giorni con allenamento completato
     gratitudine: {},          // { "YYYY-MM-DD": ["cosa 1", "cosa 2", "cosa 3"] }
+    testEsiti: {},            // { idTest: { score, max, positivo, when } } — solo locale
     sos: {                    // carta di comunicazione per i momenti difficili
       msg: "Sto attraversando un momento difficile. Non riesco a parlare, adesso. Non è colpa tua.",
       needs: ["silenzio", "tempo"],

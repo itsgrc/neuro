@@ -299,6 +299,10 @@ const App = (() => {
           <h1>${saluto}! 👋</h1>
           <p>La tua palestra della mente e il tuo spazio sicuro: esercizi con basi scientifiche, strumenti per le giornate storte e quelle buone. Pensato per menti neurodivergenti, utile a chiunque abbia un cervello. Senza giudizi, al tuo ritmo.</p>
           <div class="streak-pill">🔥 ${s.visitStreak} ${s.visitStreak === 1 ? "giorno" : "giorni"} di fila qui</div>
+          <div class="btn-row" style="margin-top:1rem">
+            <a class="btn" style="background:#fff; color:var(--primary)" href="#/inizia">🧭 Inizia da qui</a>
+            <a class="btn btn-ghost" style="border-color:rgba(255,255,255,.6); color:#fff" href="#/test">📋 Test di screening</a>
+          </div>
         </section>
 
         <div class="tip-card" style="margin-bottom:1.4rem">
@@ -847,6 +851,231 @@ const App = (() => {
     main.querySelector("[data-print]").addEventListener("click", () => window.print());
   }
 
+  /* ---------- inizia da qui: scelta diretta, senza test ---------- */
+  function viewInizia() {
+    main.innerHTML = `
+      <div class="view">
+        <div class="page-head">
+          <h1>🧭 Inizia da qui</h1>
+          <p>Nessun test obbligatorio, nessuna etichetta necessaria: scegli come vuoi entrare. Puoi cambiare strada quando vuoi.</p>
+        </div>
+
+        <h2 style="font-size:1.15rem; margin-bottom:.6rem">Di cosa hai bisogno adesso?</h2>
+        <div class="grid grid-3" style="margin-bottom:1.8rem">
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">🧘</span>
+            <h3>Rilassarmi</h3>
+            <p>Calmare corpo e mente, adesso.</p>
+            <div class="mini-links">
+              <a href="#/strumento/respiro">🫁 Respirazione</a>
+              <a href="#/strumento/bodyscan">🧘 Scansione corporea</a>
+              <a href="#/strumento/grounding">🌍 Grounding 5-4-3-2-1</a>
+              <a href="#/strumento/suoni">🎧 Suoni rilassanti</a>
+            </div>
+          </div>
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">⚡</span>
+            <h3>Attivarmi e concentrarmi</h3>
+            <p>Accendere il cervello e tenerlo sul pezzo.</p>
+            <div class="mini-links">
+              <a href="#/strumento/pomodoro">🍅 Timer di focus</a>
+              <a href="#/giochi">🏋️ Palestra della mente</a>
+              <a href="#/strumento/suoni">🎧 Rumore per il focus</a>
+            </div>
+          </div>
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">🗂️</span>
+            <h3>Organizzarmi</h3>
+            <p>Mettere ordine nella giornata e nella testa.</p>
+            <div class="mini-links">
+              <a href="#/strumento/attivita">✅ Le mie attività</a>
+              <a href="#/strumento/routine">🧭 Routine guidate</a>
+              <a href="#/strumento/abitudini">🔁 Abitudini</a>
+              <a href="#/strumento/dump">🧺 Svuota la mente</a>
+            </div>
+          </div>
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">🏋️</span>
+            <h3>Solo allenare la mente</h3>
+            <p>Nessuna neurodivergenza? La palestra vale per tutti i cervelli.</p>
+            <div class="mini-links">
+              <a href="#/giochi">🎮 Tutti gli 11 giochi</a>
+              <a href="#/strumento/gratitudine">✨ Tre cose buone</a>
+            </div>
+          </div>
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">🎓</span>
+            <h3>Capire e imparare</h3>
+            <p>Psicoeducazione seria, un passo al giorno.</p>
+            <div class="mini-links">
+              <a href="#/percorsi">🎓 Percorsi di 7 giorni</a>
+              <a href="#/risorse">📚 Risorse e guide</a>
+            </div>
+          </div>
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">📋</span>
+            <h3>Non so da dove iniziare</h3>
+            <p>Un questionario riconosciuto può orientarti (senza etichettarti).</p>
+            <div class="mini-links">
+              <a href="#/test">📋 Test di screening</a>
+              <a href="#/strumento/umore">🌤️ Parti da come stai</a>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="font-size:1.15rem; margin-bottom:.6rem">Oppure entra dalla tua neurodivergenza (o da quella di chi ami)</h2>
+        <div class="grid grid-3" style="margin-bottom:1.8rem">
+          ${Object.entries(ND_INFO).map(([k, n]) => `
+            <div class="tile">
+              <span class="tile-emoji" aria-hidden="true">${n.emoji}</span>
+              <h3>${n.nome}</h3>
+              <div class="mini-links">
+                <a href="#/giochi" data-nd-go="${k}">🎮 Giochi indicati</a>
+                <a href="#/strumenti" data-nd-go="${k}">🧰 Strumenti indicati</a>
+                <a href="#/risorse">📚 Capire meglio</a>
+              </div>
+            </div>`).join("")}
+          <div class="tile">
+            <span class="tile-emoji" aria-hidden="true">👨‍👩‍👧</span>
+            <h3>Genitore o insegnante</h3>
+            <div class="mini-links">
+              <a href="#/risorse">👨‍👩‍👧 Guida per voi</a>
+              <a href="#/giochi">🧒 Giochi con livelli per età</a>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    main.querySelectorAll("[data-nd-go]").forEach(a => a.addEventListener("click", () => {
+      filtroND.giochi = a.dataset.ndGo;
+      filtroND.strumenti = a.dataset.ndGo;
+    }));
+  }
+
+  /* ---------- test di screening riconosciuti (mai diagnosi) ---------- */
+  function viewTests() {
+    main.innerHTML = `
+      <div class="view" style="max-width:760px; margin:0 auto">
+        <div class="page-head">
+          <h1>📋 Test di screening</h1>
+          <p>Questionari <strong>validati e riconosciuti</strong> dalla letteratura scientifica, in adattamento italiano. Sono bussole, non etichette.</p>
+        </div>
+        <div class="honesty-box" style="border-color:var(--warn); background:var(--warn-soft)">
+          <h3 style="color:var(--warn)">⚠️ Prima di iniziare</h3>
+          <p>${TEST_DISCLAIMER} Questi questionari sono pensati per <strong>adulti (18+)</strong>: per bambini e ragazzi il riferimento giusto è il pediatra o la neuropsichiatria infantile.</p>
+        </div>
+        <div class="btn-row" style="margin-bottom:1.4rem">
+          <a class="btn btn-soft" href="#/inizia">🧭 Preferisco scegliere senza test →</a>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr">
+          ${TESTS.map(t => {
+            const esito = DB.state.testEsiti[t.id];
+            return `
+            <a class="tile" href="#/test/${t.id}">
+              <span class="tile-emoji" aria-hidden="true">${t.emoji}</span>
+              <h3>${t.nome}</h3>
+              <p><strong>${t.strumento}</strong> · ${t.domande.length} domande · ${t.per}</p>
+              ${esito ? `<span class="tile-tag">Ultimo risultato: ${esito.score} ${t.unita} (${esito.when})</span>` : `<span class="tile-tag">Mai fatto</span>`}
+            </a>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }
+
+  function calcolaTest(t, risposte) {
+    if (t.tipo === "asrs") {
+      const score = t.domande.filter((d, i) => risposte[i] >= d.soglia).length;
+      return { score, positivo: score >= t.sogliaPositiva };
+    }
+    if (t.tipo === "aq") {
+      const score = t.domande.filter((d, i) => d.agree ? risposte[i] <= 1 : risposte[i] >= 2).length;
+      return { score, positivo: score >= t.sogliaPositiva };
+    }
+    // gad: somma semplice
+    const score = risposte.reduce((a, b) => a + b, 0);
+    return { score, positivo: score >= t.sogliaPositiva };
+  }
+
+  function viewTest(id) {
+    const t = TESTS.find(x => x.id === id);
+    if (!t) return navigate("/test");
+    const fonte = FONTI.find(f => f.id === t.fonte);
+
+    main.innerHTML = `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <a class="back-link" href="#/test">← Tutti i test</a>
+        <div class="page-head">
+          <h1>${t.emoji} ${t.nome}</h1>
+          <p><strong>${t.strumento}</strong></p>
+        </div>
+        <div class="honesty-box" style="border-color:var(--warn); background:var(--warn-soft); padding:.9rem 1.1rem">
+          <p style="font-size:.88rem">⚠️ ${TEST_DISCLAIMER}</p>
+        </div>
+        <div class="card" style="margin-bottom:1.2rem"><p style="color:var(--text-soft)">${t.intro}</p></div>
+        <form data-test-form>
+          ${t.domande.map((d, i) => `
+            <fieldset class="test-q card">
+              <legend>${i + 1}. ${d.t}</legend>
+              <div class="test-opts">
+                ${t.opzioni.map((o, j) => `
+                  <label class="test-opt">
+                    <input type="radio" name="q${i}" value="${j}">
+                    <span>${o}</span>
+                  </label>`).join("")}
+              </div>
+            </fieldset>`).join("")}
+          <div class="btn-row" style="justify-content:center; margin:1.2rem 0">
+            <button class="btn btn-big" type="submit">Calcola il risultato</button>
+          </div>
+        </form>
+        <div data-risultato></div>
+        <p style="font-size:.8rem; color:var(--text-soft); margin-top:1rem">📚 Fonte: ${fonte ? fonte.testo : ""}</p>
+      </div>`;
+
+    main.querySelector("[data-test-form]").addEventListener("submit", e => {
+      e.preventDefault();
+      const risposte = t.domande.map((_, i) => {
+        const sel = main.querySelector(`input[name="q${i}"]:checked`);
+        return sel ? Number(sel.value) : null;
+      });
+      if (risposte.some(r => r === null)) {
+        toast("Manca qualche risposta: controlla le domande senza pallino 😊");
+        return;
+      }
+      const { score, positivo } = calcolaTest(t, risposte);
+      DB.state.testEsiti[t.id] = { score, max: t.max, positivo, when: DB.todayKey() };
+      DB.save();
+
+      let banda = "";
+      if (t.tipo === "gad") {
+        banda = score <= 4 ? "ansia minima" : score <= 9 ? "ansia lieve" : score <= 14 ? "ansia moderata" : "ansia elevata";
+      }
+
+      const box = main.querySelector("[data-risultato]");
+      box.innerHTML = `
+        <div class="card" style="border:2px solid ${positivo ? "var(--warn)" : "var(--accent)"}">
+          <h2 style="margin-bottom:.5rem">Il tuo risultato: ${score} ${t.unita}${banda ? ` · ${banda}` : ""}</h2>
+          <p style="margin-bottom:.8rem">${positivo
+            ? `In letteratura, un punteggio come il tuo (≥ ${t.sogliaPositiva}) è considerato un <strong>segnale che vale la pena approfondire</strong> con una persona professionista. Non è una diagnosi: è un buon motivo per una chiacchierata con chi può valutarti davvero.`
+            : `Il tuo punteggio è <strong>sotto la soglia di screening</strong> usata in letteratura (${t.sogliaPositiva}). Ricorda però: se le difficoltà nella vita reale ci sono, meriti supporto a prescindere da qualsiasi numero.`}
+          </p>
+          <p style="font-size:.85rem; color:var(--text-soft); margin-bottom:1rem">⚠️ ${TEST_DISCLAIMER}</p>
+          <div class="btn-row">
+            <a class="btn" href="#/risorse">🤝 Dove trovare aiuto in Italia</a>
+            <a class="btn btn-soft" href="#/giochi" data-nd-result>🎮 Esercizi indicati</a>
+            <a class="btn btn-ghost" href="#/inizia">🧭 Esplora l'app</a>
+          </div>
+        </div>`;
+      const ndLink = box.querySelector("[data-nd-result]");
+      if (ndLink) ndLink.addEventListener("click", () => {
+        filtroND.giochi = t.nd;
+        filtroND.strumenti = t.nd;
+      });
+      box.scrollIntoView({ behavior: "smooth", block: "start" });
+      confetti(20);
+    });
+  }
+
   function viewImpostazioni() {
     const st = DB.state.settings;
     main.innerHTML = `
@@ -1019,6 +1248,9 @@ const App = (() => {
     { re: /^\/strumenti$/, view: viewStrumenti, nav: "strumenti" },
     { re: /^\/strumento\/([\w-]+)$/, view: viewStrumento, nav: "strumenti" },
     { re: /^\/risorse$/, view: viewRisorse, nav: "risorse" },
+    { re: /^\/inizia$/, view: viewInizia, nav: "home" },
+    { re: /^\/test$/, view: viewTests, nav: "risorse" },
+    { re: /^\/test\/([\w-]+)$/, view: viewTest, nav: "risorse" },
     { re: /^\/percorsi$/, view: viewPercorsi, nav: "risorse" },
     { re: /^\/percorso\/([\w-]+)$/, view: viewPercorso, nav: "risorse" },
     { re: /^\/progressi$/, view: viewProgressi, nav: "progressi" },

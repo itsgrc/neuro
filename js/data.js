@@ -383,6 +383,9 @@ const FONTI = [
   { id: "verbruggen2008", testo: "Verbruggen, F., & Logan, G. D. (2008). Response inhibition in the stop-signal paradigm. <em>Trends in Cognitive Sciences</em>, 12(11), 418–424." },
   { id: "khoury2013",     testo: "Khoury, B., et al. (2013). Mindfulness-based therapy: A comprehensive meta-analysis. <em>Clinical Psychology Review</em>, 33(6), 763–771." },
   { id: "seligman2005",   testo: "Seligman, M. E. P., Steen, T. A., Park, N., & Peterson, C. (2005). Positive psychology progress: Empirical validation of interventions. <em>American Psychologist</em>, 60(5), 410–421." },
+  { id: "kessler2005",    testo: "Kessler, R. C., et al. (2005). The World Health Organization Adult ADHD Self-Report Scale (ASRS): A short screening scale for use in the general population. <em>Psychological Medicine</em>, 35(2), 245–256." },
+  { id: "allison2012",    testo: "Allison, C., Auyeung, B., & Baron-Cohen, S. (2012). Toward brief “red flags” for autism screening: The Short Autism Spectrum Quotient and the Short Quantitative Checklist in 1,000 cases and 3,000 controls. <em>Journal of the American Academy of Child & Adolescent Psychiatry</em>, 51(2), 202–212." },
+  { id: "spitzer2006",    testo: "Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A brief measure for assessing generalized anxiety disorder: The GAD-7. <em>Archives of Internal Medicine</em>, 166(10), 1092–1097." },
 ];
 
 /* Fonti principali per ogni scheda della sezione Risorse */
@@ -681,6 +684,91 @@ const PERCORSI = [
         fonte: "gross1998",
       },
     ],
+  },
+];
+
+/* ============================================================
+   Test di screening: questionari validati e riconosciuti,
+   in adattamento italiano. NON producono diagnosi: indicano
+   solo se ha senso un approfondimento professionale.
+   ============================================================ */
+
+const TEST_DISCLAIMER = "Questo è uno strumento di screening, NON una diagnosi. Nessun questionario può dirti se sei ADHD, autistico o ansioso: può solo suggerire se ha senso approfondire con una persona professionista (medico, psicologo, neuropsichiatra). Qualunque sia il risultato, se qualcosa ti pesa, meriti ascolto. Le risposte restano solo sul tuo dispositivo.";
+
+const TESTS = [
+  {
+    id: "asrs",
+    emoji: "⚡",
+    nome: "Screening ADHD adulti",
+    strumento: "ASRS v1.1 · parte A (Organizzazione Mondiale della Sanità)",
+    per: "ADHD · dai 18 anni",
+    nd: "adhd",
+    fonte: "kessler2005",
+    tipo: "asrs",
+    intro: "Le 6 domande di screening della Adult ADHD Self-Report Scale, sviluppata con l'OMS (Kessler et al., 2005). Rispondi pensando a come ti sei sentito e comportato negli ultimi 6 mesi.",
+    opzioni: ["Mai", "Raramente", "A volte", "Spesso", "Molto spesso"],
+    domande: [
+      { t: "Quanto spesso hai difficoltà a completare i dettagli finali di un progetto, una volta fatte le parti più impegnative?", soglia: 2 },
+      { t: "Quanto spesso hai difficoltà a mettere le cose in ordine quando devi svolgere un compito che richiede organizzazione?", soglia: 2 },
+      { t: "Quanto spesso hai problemi a ricordare appuntamenti o impegni?", soglia: 2 },
+      { t: "Quando un compito richiede molta riflessione, quanto spesso eviti di iniziarlo o lo rimandi?", soglia: 3 },
+      { t: "Quanto spesso muovi o agiti mani o piedi quando devi stare seduto a lungo?", soglia: 3 },
+      { t: "Quanto spesso ti senti eccessivamente attivo e spinto a fare cose, come se avessi un motore dentro?", soglia: 3 },
+    ],
+    sogliaPositiva: 4,
+    max: 6,
+    unita: "risposte significative su 6",
+  },
+  {
+    id: "aq10",
+    emoji: "♾️",
+    nome: "Screening tratti autistici",
+    strumento: "AQ-10 adulti (Autism Research Centre, Università di Cambridge)",
+    per: "Autismo · dai 18 anni",
+    nd: "autismo",
+    fonte: "allison2012",
+    tipo: "aq",
+    intro: "La versione breve dell'Autism Spectrum Quotient (Allison, Auyeung & Baron-Cohen, 2012), usata anche dal sistema sanitario inglese come 'bandierina' per l'invio alla valutazione. Rispondi d'istinto: non ci sono risposte giuste.",
+    opzioni: ["Decisamente d'accordo", "Abbastanza d'accordo", "Abbastanza in disaccordo", "Decisamente in disaccordo"],
+    domande: [
+      { t: "Noto spesso piccoli suoni che gli altri non notano.", agree: true },
+      { t: "Di solito mi concentro più sull'insieme che sui piccoli dettagli.", agree: false },
+      { t: "Trovo facile fare più cose contemporaneamente.", agree: false },
+      { t: "Se vengo interrotto, riesco a tornare molto in fretta a ciò che stavo facendo.", agree: false },
+      { t: "Trovo facile “leggere tra le righe” quando qualcuno mi parla.", agree: false },
+      { t: "Capisco se chi mi ascolta si sta annoiando.", agree: false },
+      { t: "Quando leggo una storia, faccio fatica a capire le intenzioni dei personaggi.", agree: true },
+      { t: "Mi piace raccogliere informazioni su categorie di cose (tipi di auto, di uccelli, di treni, di piante…).", agree: true },
+      { t: "Trovo facile capire cosa pensa o prova qualcuno guardandolo in viso.", agree: false },
+      { t: "Faccio fatica a capire le intenzioni delle persone.", agree: true },
+    ],
+    sogliaPositiva: 6,
+    max: 10,
+    unita: "punti su 10",
+  },
+  {
+    id: "gad7",
+    emoji: "🌊",
+    nome: "Screening ansia",
+    strumento: "GAD-7 (Spitzer, Kroenke, Williams & Löwe)",
+    per: "Ansia · dai 18 anni",
+    nd: "ansia",
+    fonte: "spitzer2006",
+    tipo: "gad",
+    intro: "Il questionario più usato al mondo per lo screening dell'ansia generalizzata (Spitzer et al., 2006), liberamente utilizzabile. Pensa alle ULTIME 2 SETTIMANE: quanto spesso ti hanno dato fastidio questi problemi?",
+    opzioni: ["Mai", "Diversi giorni", "Più della metà dei giorni", "Quasi ogni giorno"],
+    domande: [
+      { t: "Sentirti nervoso/a, ansioso/a o con i nervi a fior di pelle." },
+      { t: "Non riuscire a smettere di preoccuparti o a tenere sotto controllo le preoccupazioni." },
+      { t: "Preoccuparti troppo per cose diverse." },
+      { t: "Avere difficoltà a rilassarti." },
+      { t: "Essere così irrequieto/a da far fatica a stare fermo/a." },
+      { t: "Infastidirti o irritarti facilmente." },
+      { t: "Avere paura che possa succedere qualcosa di terribile." },
+    ],
+    sogliaPositiva: 10,
+    max: 21,
+    unita: "punti su 21",
   },
 ];
 

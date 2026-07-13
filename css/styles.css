@@ -856,6 +856,32 @@ details.res-details summary {
 .mic-attivo { background: var(--warn-soft) !important; border-color: var(--warn) !important; color: var(--warn) !important; animation: mic-pulse 1.2s infinite; }
 @keyframes mic-pulse { 50% { opacity: .6; } }
 
+/* ---------- Test di screening e "Inizia da qui" ---------- */
+.mini-links { display: flex; flex-direction: column; gap: .35rem; margin-top: .3rem; }
+.mini-links a {
+  text-decoration: none; font-weight: 700; font-size: .88rem;
+  color: var(--text); background: var(--bg-soft);
+  padding: .45rem .7rem; border-radius: 10px;
+  transition: background var(--anim), color var(--anim);
+}
+.mini-links a:hover { background: var(--primary-soft); color: var(--primary); }
+
+.test-q { border: 1px solid var(--border); margin-bottom: .8rem; padding: 1rem 1.2rem; }
+.test-q legend {
+  font-weight: 700; padding: 0 .4rem; float: left; width: 100%;
+  margin-bottom: .7rem; line-height: 1.45;
+}
+.test-opts { display: flex; flex-wrap: wrap; gap: .45rem; clear: both; }
+.test-opt {
+  display: inline-flex; align-items: center; gap: .45rem;
+  border: 2px solid var(--border); border-radius: 999px;
+  padding: .45rem .9rem; cursor: pointer; font-weight: 600; font-size: .9rem;
+  transition: border-color var(--anim), background var(--anim);
+}
+.test-opt:hover { border-color: var(--primary); }
+.test-opt:has(input:checked) { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.test-opt input { accent-color: var(--primary); }
+
 /* ---------- Stampa (report per il professionista) ---------- */
 @media print {
   .topbar, .mainnav, .footer, .no-print, .toast-zone, .confetti-zone { display: none !important; }
