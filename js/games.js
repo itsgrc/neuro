@@ -97,6 +97,18 @@ const GAMES = [
 
 /* ---------- utilità comuni ai giochi ---------- */
 
+/** Bottoni di scelta livello con età consigliata; ⭐ sul livello
+    adatto al profilo impostato nelle Opzioni. */
+function livelliMenuHTML(livelli, mappaEta) {
+  const eta = DB.state.settings.eta;
+  const consigliato = eta && mappaEta ? mappaEta[eta] : null;
+  return livelli.map(l => `
+    <button class="btn btn-big btn-lvl" data-lvl="${l.id}">
+      <span>${l.id === consigliato ? "⭐ " : ""}${l.nome}</span>
+      <small class="lvl-eta">${l.eta}</small>
+    </button>`).join("");
+}
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -136,9 +148,9 @@ function gameOverCard(container, { emoji, titolo, righe, isRecord, replay }) {
 function renderMemoria(container) {
   const EMOJIS = ["🐶","🐱","🦊","🐼","🐸","🦋","🌻","🍕","🚀","🌈","⭐","🎈","🍓","🐙","🎧","🧩","🍩","🌵","⚽","🎨"];
   const LIVELLI = [
-    { id: "facile", nome: "Facile", coppie: 6, cols: 4 },
-    { id: "medio", nome: "Medio", coppie: 8, cols: 4 },
-    { id: "difficile", nome: "Difficile", coppie: 12, cols: 6 },
+    { id: "facile", nome: "Facile · 6 coppie", coppie: 6, cols: 4, eta: "consigliato 6–10 anni" },
+    { id: "medio", nome: "Medio · 8 coppie", coppie: 8, cols: 4, eta: "consigliato 11+ anni" },
+    { id: "difficile", nome: "Difficile · 12 coppie", coppie: 12, cols: 6, eta: "sfida per tutti" },
   ];
 
   function menu() {
@@ -147,7 +159,7 @@ function renderMemoria(container) {
         <h2 style="margin-bottom:.6rem">Scegli la difficoltà</h2>
         <p style="color:var(--text-soft); margin-bottom:1rem">Trova tutte le coppie con meno mosse possibili.</p>
         <div class="btn-row" style="justify-content:center">
-          ${LIVELLI.map(l => `<button class="btn btn-big" data-lvl="${l.id}">${l.nome} · ${l.coppie} coppie</button>`).join("")}
+          ${livelliMenuHTML(LIVELLI, { bambini: "facile", ragazzi: "medio", adulti: "medio" })}
         </div>
       </div>`;
     container.querySelectorAll("[data-lvl]").forEach(b =>
@@ -232,7 +244,11 @@ function renderStroop(container) {
     { nome: "BLU", css: "#2980b9" },
     { nome: "GIALLO", css: "#d8a013" },
   ];
-  const DURATA = 45;
+  const LIVELLI = [
+    { id: "facile", nome: "Facile · 3 colori", colori: 3, durata: 60, eta: "consigliato 8–10 anni" },
+    { id: "medio", nome: "Medio · 4 colori", colori: 4, durata: 45, eta: "consigliato 11+ anni" },
+    { id: "esperto", nome: "Esperto · 4 colori", colori: 4, durata: 30, eta: "sfida lampo" },
+  ];
 
   function menu() {
     container.innerHTML = `
@@ -240,22 +256,25 @@ function renderStroop(container) {
         <h2 style="margin-bottom:.6rem">Colore ribelle</h2>
         <p style="color:var(--text-soft); max-width:46ch; margin:0 auto 1rem">
           Vedrai una parola scritta con un colore che non c'entra nulla.<br>
-          <strong>Tocca il colore dell'inchiostro</strong>, ignora quello che c'è scritto!<br>
-          Hai ${DURATA} secondi.
+          <strong>Tocca il colore dell'inchiostro</strong>, ignora quello che c'è scritto!
         </p>
-        <button class="btn btn-big" data-start>▶️ Inizia</button>
+        <div class="btn-row" style="justify-content:center">
+          ${livelliMenuHTML(LIVELLI, { bambini: "facile", ragazzi: "medio", adulti: "medio" })}
+        </div>
       </div>`;
-    container.querySelector("[data-start]").addEventListener("click", start);
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
   }
 
-  function start() {
-    let punti = 0, errori = 0, resta = DURATA, corrente = null;
+  function start(lvl) {
+    const COLS = COLORI.slice(0, lvl.colori);
+    let punti = 0, errori = 0, resta = lvl.durata, corrente = null;
 
     container.innerHTML = `
       <div class="game-hud">
         <div class="hud-item">✅ <span data-ok>0</span></div>
         <div class="hud-item">❌ <span data-no>0</span></div>
-        <div class="hud-item">⏱ <span data-tempo>${DURATA}s</span></div>
+        <div class="hud-item">⏱ <span data-tempo>${lvl.durata}s</span></div>
       </div>
       <div class="card">
         <div class="stroop-word" data-word></div>
@@ -268,7 +287,7 @@ function renderStroop(container) {
     const elTempo = container.querySelector("[data-tempo]");
     const elBtns = container.querySelector("[data-btns]");
 
-    COLORI.forEach(c => {
+    COLS.forEach(c => {
       const b = document.createElement("button");
       b.className = "stroop-btn";
       b.style.background = c.css;
@@ -286,9 +305,9 @@ function renderStroop(container) {
     });
 
     function prossima() {
-      const word = COLORI[Math.floor(Math.random() * COLORI.length)];
+      const word = COLS[Math.floor(Math.random() * COLS.length)];
       let ink;
-      do { ink = COLORI[Math.floor(Math.random() * COLORI.length)]; }
+      do { ink = COLS[Math.floor(Math.random() * COLS.length)]; }
       while (ink.nome === word.nome && Math.random() > 0.25); // a volte coincidono: tiene sveglia l'attenzione
       corrente = { word, ink };
       elWord.textContent = word.nome;
@@ -300,12 +319,12 @@ function renderStroop(container) {
       elTempo.textContent = `${resta}s`;
       if (resta <= 0) {
         clearInterval(timer);
-        const isRecord = DB.submitScore("stroop", "Colore ribelle", punti, "high");
+        const isRecord = DB.submitScore(`stroop-${lvl.id}`, `Colore ribelle (${lvl.id})`, punti, "high");
         gameOverCard(container, {
           emoji: punti >= 25 ? "🤩" : "💪",
           titolo: "Tempo scaduto!",
           righe: [`Risposte giuste: <strong>${punti}</strong>`, `Errori: <strong>${errori}</strong>`],
-          isRecord, replay: start,
+          isRecord, replay: () => start(lvl),
         });
       }
     }, 1000);
@@ -403,7 +422,26 @@ function renderSimon(container) {
     { id: 3, cls: "simon-yellow", freq: 523.3 },
   ];
 
-  function start() {
+  const RITMI = [
+    { id: "tranquillo", nome: "Tranquillo", base: 800, min: 450, eta: "consigliato 6–10 anni" },
+    { id: "medio", nome: "Medio", base: 650, min: 320, eta: "consigliato 11+ anni" },
+    { id: "esperto", nome: "Esperto", base: 500, min: 240, eta: "riflessi pronti!" },
+  ];
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Sequenza luminosa</h2>
+        <p style="color:var(--text-soft); margin-bottom:1rem">Osserva la sequenza di luci e suoni, poi ripetila. A ogni turno si allunga!</p>
+        <div class="btn-row" style="justify-content:center">
+          ${livelliMenuHTML(RITMI, { bambini: "tranquillo", ragazzi: "medio", adulti: "medio" })}
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(RITMI.find(r => r.id === b.dataset.lvl))));
+  }
+
+  function start(ritmo) {
     let seq = [], pos = 0, accettaInput = false, livello = 0;
     let timeouts = [];
     App.addCleanup(() => timeouts.forEach(clearTimeout));
@@ -411,7 +449,7 @@ function renderSimon(container) {
     container.innerHTML = `
       <div class="game-hud">
         <div class="hud-item">Livello: <span data-lvl>0</span></div>
-        <div class="hud-item">Record: <span data-best>${DB.state.stats.bestScores.simon?.value ?? "—"}</span></div>
+        <div class="hud-item">Record: <span data-best>${DB.state.stats.bestScores[`simon-${ritmo.id}`]?.value ?? "—"}</span></div>
       </div>
       <p class="game-msg" data-msg>Osserva la sequenza… poi ripetila!</p>
       <div class="simon-board" data-board></div>
@@ -444,7 +482,7 @@ function renderSimon(container) {
       accettaInput = false;
       padEls.forEach(e => (e.disabled = true));
       elMsg.textContent = "Osserva… 👀";
-      const velocita = Math.max(650 - livello * 22, 320);
+      const velocita = Math.max(ritmo.base - livello * 22, ritmo.min);
       seq.forEach((idx, i) => {
         timeouts.push(setTimeout(() => {
           accendi(PADS[idx], padEls[idx]);
@@ -481,12 +519,12 @@ function renderSimon(container) {
         accettaInput = false;
         App.beep(140, 0.4);
         const raggiunto = livello - 1;
-        const isRecord = raggiunto > 0 && DB.submitScore("simon", "Sequenza luminosa", raggiunto, "high");
+        const isRecord = raggiunto > 0 && DB.submitScore(`simon-${ritmo.id}`, `Sequenza luminosa (${ritmo.id})`, raggiunto, "high");
         gameOverCard(container, {
           emoji: raggiunto >= 8 ? "🧠" : "🎵",
           titolo: "Sequenza interrotta!",
           righe: [`Livelli completati: <strong>${raggiunto}</strong>`],
-          isRecord, replay: start,
+          isRecord, replay: () => start(ritmo),
         });
       }
     }
@@ -497,7 +535,7 @@ function renderSimon(container) {
     });
   }
 
-  start();
+  menu();
 }
 
 /* ============================================================
@@ -505,8 +543,8 @@ function renderSimon(container) {
    ============================================================ */
 function renderNumeri(container) {
   const LIVELLI = [
-    { id: "4", nome: "4×4", n: 16, cols: 4 },
-    { id: "5", nome: "5×5", n: 25, cols: 5 },
+    { id: "4", nome: "4×4 · fino a 16", n: 16, cols: 4, eta: "consigliato 6–10 anni" },
+    { id: "5", nome: "5×5 · fino a 25", n: 25, cols: 5, eta: "consigliato 10+ anni" },
   ];
 
   function menu() {
@@ -515,7 +553,7 @@ function renderNumeri(container) {
         <h2 style="margin-bottom:.6rem">Caccia ai numeri</h2>
         <p style="color:var(--text-soft); margin-bottom:1rem">Tocca i numeri in ordine crescente, da 1 in su, il più in fretta possibile.<br>Consiglio pro: tieni lo sguardo al centro e usa la visione periferica.</p>
         <div class="btn-row" style="justify-content:center">
-          ${LIVELLI.map(l => `<button class="btn btn-big" data-lvl="${l.id}">${l.nome}</button>`).join("")}
+          ${livelliMenuHTML(LIVELLI, { bambini: "4", ragazzi: "5", adulti: "5" })}
         </div>
       </div>`;
     container.querySelectorAll("[data-lvl]").forEach(b =>
@@ -597,8 +635,8 @@ function renderFlusso(container) {
           Livello 1 = confronta col precedente. Livello 2 = con due fa (tosto!).
         </p>
         <div class="btn-row" style="justify-content:center">
-          <button class="btn btn-big" data-n="1">Livello 1</button>
-          <button class="btn btn-big" data-n="2">Livello 2 🔥</button>
+          <button class="btn btn-big btn-lvl" data-n="1"><span>Livello 1</span><small class="lvl-eta">consigliato 8+ anni</small></button>
+          <button class="btn btn-big btn-lvl" data-n="2"><span>Livello 2 🔥</span><small class="lvl-eta">sfida · 13+ anni</small></button>
         </div>
       </div>`;
     container.querySelectorAll("[data-n]").forEach(b =>
@@ -715,7 +753,10 @@ function renderTempo(container) {
           Niente orologi in vista, eh 😉 — 3 round, vince chi conosce il proprio orologio interno.
         </p>
         <div class="btn-row" style="justify-content:center">
-          ${DURATE.map(d => `<button class="btn btn-big" data-durata="${d}">${d} secondi</button>`).join("")}
+          ${DURATE.map((d, i) => `<button class="btn btn-big btn-lvl" data-durata="${d}">
+            <span>${d} secondi</span>
+            <small class="lvl-eta">${["consigliato 6–10 anni", "consigliato 9+ anni", "consigliato 12+ anni"][i]}</small>
+          </button>`).join("")}
         </div>
       </div>`;
     container.querySelectorAll("[data-durata]").forEach(b =>
@@ -802,10 +843,14 @@ function renderTempo(container) {
    8) CAMBIO DI ROTTA (task switching)
    ============================================================ */
 function renderRotta(container) {
-  const DURATA = 45;
   const FORME = ["cerchio", "quadrato"];
   const COLORI_R = ["rosso", "blu"];
   const EMOJI = { "rosso-cerchio": "🔴", "blu-cerchio": "🔵", "rosso-quadrato": "🟥", "blu-quadrato": "🟦" };
+  const LIVELLI = [
+    { id: "facile", nome: "Facile · cambi rari", durata: 50, pCambio: 0.15, minStesso: 3, eta: "consigliato 7–10 anni" },
+    { id: "medio", nome: "Medio", durata: 45, pCambio: 0.25, minStesso: 2, eta: "consigliato 11+ anni" },
+    { id: "esperto", nome: "Esperto · cambi continui", durata: 35, pCambio: 0.4, minStesso: 1, eta: "elasticità pura" },
+  ];
 
   function menu() {
     container.innerHTML = `
@@ -814,22 +859,25 @@ function renderRotta(container) {
         <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
           Vedrai una figura. In alto c'è la <strong>regola del momento</strong>:<br>
           se dice <strong>COLORE</strong>, rispondi al colore. Se dice <strong>FORMA</strong>, rispondi alla forma.<br>
-          La regola cambia senza preavviso: resta elastico! Hai ${DURATA} secondi.
+          La regola cambia senza preavviso: resta elastico!
         </p>
-        <button class="btn btn-big" data-start>▶️ Inizia</button>
+        <div class="btn-row" style="justify-content:center">
+          ${livelliMenuHTML(LIVELLI, { bambini: "facile", ragazzi: "medio", adulti: "medio" })}
+        </div>
       </div>`;
-    container.querySelector("[data-start]").addEventListener("click", start);
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
   }
 
-  function start() {
-    let punti = 0, errori = 0, resta = DURATA;
+  function start(lvl) {
+    let punti = 0, errori = 0, resta = lvl.durata;
     let regola = "colore", daUltimoCambio = 0, corrente = null;
 
     container.innerHTML = `
       <div class="game-hud">
         <div class="hud-item">✅ <span data-ok>0</span></div>
         <div class="hud-item">❌ <span data-no>0</span></div>
-        <div class="hud-item">⏱ <span data-tempo>${DURATA}s</span></div>
+        <div class="hud-item">⏱ <span data-tempo>${lvl.durata}s</span></div>
       </div>
       <div class="card" style="text-align:center">
         <div class="rotta-regola" data-regola>🎯 Regola: COLORE</div>
@@ -856,8 +904,8 @@ function renderRotta(container) {
 
     function prossima() {
       daUltimoCambio++;
-      // dopo almeno 2 prove, la regola può cambiare (25% di probabilità)
-      if (daUltimoCambio >= 2 && Math.random() < 0.25) {
+      // dopo un minimo di prove, la regola può cambiare (probabilità del livello)
+      if (daUltimoCambio >= lvl.minStesso && Math.random() < lvl.pCambio) {
         regola = regola === "colore" ? "forma" : "colore";
         daUltimoCambio = 0;
         elRegola.textContent = `🎯 Regola: ${regola.toUpperCase()}`;
@@ -886,12 +934,12 @@ function renderRotta(container) {
       elTempo.textContent = `${resta}s`;
       if (resta <= 0) {
         clearInterval(timer);
-        const isRecord = DB.submitScore("rotta", "Cambio di rotta", punti, "high");
+        const isRecord = DB.submitScore(`rotta-${lvl.id}`, `Cambio di rotta (${lvl.id})`, punti, "high");
         gameOverCard(container, {
           emoji: punti >= 25 ? "🤸" : "🔀",
           titolo: "Tempo scaduto!",
           righe: [`Risposte giuste: <strong>${punti}</strong>`, `Errori: <strong>${errori}</strong>`],
-          isRecord, replay: start,
+          isRecord, replay: () => start(lvl),
         });
       }
     }, 1000);
@@ -909,6 +957,11 @@ function renderRotta(container) {
    ============================================================ */
 function renderStima(container) {
   const TRIALS = 12;
+  const LIVELLI = [
+    { id: "facile", nome: "Facile · 2,5 secondi", mostra: 2500, eta: "consigliato 6–9 anni" },
+    { id: "medio", nome: "Medio · 1,5 secondi", mostra: 1500, eta: "consigliato 10+ anni" },
+    { id: "esperto", nome: "Lampo · 0,8 secondi", mostra: 800, eta: "occhio di falco" },
+  ];
 
   function menu() {
     container.innerHTML = `
@@ -919,9 +972,12 @@ function renderStima(container) {
           <strong>tocca il lato che ne ha di più</strong>.<br>
           Niente tempo per contare: fidati dell'istinto. ${TRIALS} sfide.
         </p>
-        <button class="btn btn-big" data-start>▶️ Inizia</button>
+        <div class="btn-row" style="justify-content:center">
+          ${livelliMenuHTML(LIVELLI, { bambini: "facile", ragazzi: "medio", adulti: "medio" })}
+        </div>
       </div>`;
-    container.querySelector("[data-start]").addEventListener("click", start);
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
   }
 
   function nuvola(el, n) {
@@ -935,7 +991,7 @@ function renderStima(container) {
     }
   }
 
-  function start() {
+  function start(lvl) {
     let trial = 0, giuste = 0, attesa = false, lati = null, timeoutId = null;
     App.addCleanup(() => clearTimeout(timeoutId));
 
@@ -969,11 +1025,11 @@ function renderStima(container) {
       nuvola(elDx, lati.dx);
       attesa = true;
       elMsg.textContent = "Guarda… 👀";
-      // dopo 1.5 secondi i pallini spariscono: si risponde a memoria
+      // allo scadere del tempo del livello i pallini spariscono: si risponde a memoria
       timeoutId = setTimeout(() => {
         elSx.innerHTML = ""; elDx.innerHTML = "";
         elMsg.textContent = "Quale lato ne aveva di più?";
-      }, 1500);
+      }, lvl.mostra);
     }
 
     container.querySelectorAll("[data-lato]").forEach(b => b.addEventListener("click", () => {
@@ -995,12 +1051,12 @@ function renderStima(container) {
     }));
 
     function fine() {
-      const isRecord = DB.submitScore("stima", "Colpo d'occhio", giuste, "high");
+      const isRecord = DB.submitScore(`stima-${lvl.id}`, `Colpo d'occhio (${lvl.id})`, giuste, "high");
       gameOverCard(container, {
         emoji: giuste >= TRIALS * 0.8 ? "🦅" : "👁️",
         titolo: giuste >= TRIALS * 0.8 ? "Occhio di falco!" : "Il colpo d'occhio si allena!",
         righe: [`Risposte giuste: <strong>${giuste}/${TRIALS}</strong>`],
-        isRecord, replay: start,
+        isRecord, replay: () => start(lvl),
       });
     }
 
@@ -1014,7 +1070,26 @@ function renderStima(container) {
    10) PERCORSO DI BLOCCHI (compito di Corsi)
    ============================================================ */
 function renderCorsi(container) {
-  function start() {
+  const LIVELLI = [
+    { id: "facile", nome: "Facile · si parte da 2", start: 2, eta: "consigliato 6–10 anni" },
+    { id: "medio", nome: "Medio · si parte da 3", start: 3, eta: "consigliato 11+ anni" },
+    { id: "esperto", nome: "Esperto · si parte da 4", start: 4, eta: "memoria d'acciaio" },
+  ];
+
+  function menu() {
+    container.innerHTML = `
+      <div class="card" style="text-align:center">
+        <h2 style="margin-bottom:.6rem">Percorso di blocchi</h2>
+        <p style="color:var(--text-soft); margin-bottom:1rem">I blocchi si illuminano in sequenza: rifai il percorso nello stesso ordine. A ogni turno si allunga!</p>
+        <div class="btn-row" style="justify-content:center">
+          ${livelliMenuHTML(LIVELLI, { bambini: "facile", ragazzi: "medio", adulti: "medio" })}
+        </div>
+      </div>`;
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
+  }
+
+  function start(lvl) {
     let seq = [], pos = 0, accetta = false, span = 0;
     let timeouts = [];
     App.addCleanup(() => timeouts.forEach(clearTimeout));
@@ -1022,7 +1097,7 @@ function renderCorsi(container) {
     container.innerHTML = `
       <div class="game-hud">
         <div class="hud-item">Lunghezza: <span data-span>0</span></div>
-        <div class="hud-item">Record: <span>${DB.state.stats.bestScores.corsi?.value ?? "—"}</span></div>
+        <div class="hud-item">Record: <span>${DB.state.stats.bestScores[`corsi-${lvl.id}`]?.value ?? "—"}</span></div>
       </div>
       <p class="game-msg" data-msg>Guarda il percorso, poi rifallo!</p>
       <div class="corsi-grid" data-grid></div>
@@ -1052,8 +1127,8 @@ function renderCorsi(container) {
     }
 
     function nuovaSequenza() {
-      // sequenza senza ripetizioni consecutive
-      const len = span + 2; // si parte da 2 blocchi
+      // sequenza senza ripetizioni consecutive; lunghezza iniziale dal livello
+      const len = span + lvl.start;
       seq = [];
       while (seq.length < len) {
         const c = Math.floor(Math.random() * 9);
@@ -1095,14 +1170,14 @@ function renderCorsi(container) {
       } else {
         accetta = false;
         App.beep(140, 0.4);
-        const raggiunto = span > 0 ? span + 1 : 0; // lunghezza massima completata
-        const isRecord = raggiunto > 0 && DB.submitScore("corsi", "Percorso di blocchi", raggiunto, "high");
+        const raggiunto = span > 0 ? span + lvl.start - 1 : 0; // lunghezza massima completata
+        const isRecord = raggiunto > 0 && DB.submitScore(`corsi-${lvl.id}`, `Percorso di blocchi (${lvl.id})`, raggiunto, "high");
         gameOverCard(container, {
           emoji: raggiunto >= 6 ? "🧠" : "🟪",
           titolo: "Percorso interrotto!",
           righe: [`Percorso più lungo completato: <strong>${raggiunto || "—"} blocchi</strong>`,
             `<span style="font-size:.9rem; color:var(--text-soft)">La media degli adulti nel compito di Corsi è 5-6 blocchi.</span>`],
-          isRecord, replay: start,
+          isRecord, replay: () => start(lvl),
         });
       }
     }
@@ -1110,14 +1185,18 @@ function renderCorsi(container) {
     btnGo.addEventListener("click", () => { btnGo.remove(); nuovaSequenza(); });
   }
 
-  start();
+  menu();
 }
 
 /* ============================================================
    11) SEMAFORO (go/no-go)
    ============================================================ */
 function renderGonogo(container) {
-  const DURATA = 45;
+  const LIVELLI = [
+    { id: "facile", nome: "Facile · ritmo lento", durata: 45, goP: 0.8, stimMs: 950, eta: "consigliato 6–9 anni" },
+    { id: "medio", nome: "Medio", durata: 45, goP: 0.7, stimMs: 750, eta: "consigliato 10+ anni" },
+    { id: "esperto", nome: "Esperto · ritmo serrato", durata: 40, goP: 0.6, stimMs: 550, eta: "nervi d'acciaio" },
+  ];
 
   function menu() {
     container.innerHTML = `
@@ -1126,15 +1205,18 @@ function renderGonogo(container) {
         <p style="color:var(--text-soft); max-width:48ch; margin:0 auto 1rem">
           <strong>🟢 verde → PREMI</strong> il pulsante, più veloce che puoi.<br>
           <strong>🔴 rosso → FERMO</strong>: non premere niente.<br>
-          Il rosso arriva quando meno te lo aspetti. ${DURATA} secondi.
+          Il rosso arriva quando meno te lo aspetti.
         </p>
-        <button class="btn btn-big" data-start>▶️ Inizia</button>
+        <div class="btn-row" style="justify-content:center">
+          ${livelliMenuHTML(LIVELLI, { bambini: "facile", ragazzi: "medio", adulti: "medio" })}
+        </div>
       </div>`;
-    container.querySelector("[data-start]").addEventListener("click", start);
+    container.querySelectorAll("[data-lvl]").forEach(b =>
+      b.addEventListener("click", () => start(LIVELLI.find(l => l.id === b.dataset.lvl))));
   }
 
-  function start() {
-    let hits = 0, falsi = 0, mancati = 0, resta = DURATA;
+  function start(lvl) {
+    let hits = 0, falsi = 0, mancati = 0, resta = lvl.durata;
     let corrente = null, risposto = false;
     let timeouts = [];
     App.addCleanup(() => timeouts.forEach(clearTimeout));
@@ -1144,7 +1226,7 @@ function renderGonogo(container) {
         <div class="hud-item">✅ <span data-ok>0</span></div>
         <div class="hud-item">🚫 Falsi: <span data-falsi>0</span></div>
         <div class="hud-item">💤 Persi: <span data-persi>0</span></div>
-        <div class="hud-item">⏱ <span data-tempo>${DURATA}s</span></div>
+        <div class="hud-item">⏱ <span data-tempo>${lvl.durata}s</span></div>
       </div>
       <div class="card" style="text-align:center">
         <div class="flow-stim" data-stim style="min-height:7rem"></div>
@@ -1160,8 +1242,8 @@ function renderGonogo(container) {
 
     function prossimo() {
       if (resta <= 0) return;
-      // 70% verde (go), 30% rosso (no-go)
-      corrente = Math.random() < 0.7 ? "go" : "nogo";
+      // percentuale di verdi (go) e durata dello stimolo in base al livello
+      corrente = Math.random() < lvl.goP ? "go" : "nogo";
       risposto = false;
       elStim.textContent = corrente === "go" ? "🟢" : "🔴";
       timeouts.push(setTimeout(() => {
@@ -1171,7 +1253,7 @@ function renderGonogo(container) {
         corrente = null;
         elStim.textContent = "";
         timeouts.push(setTimeout(prossimo, 250 + Math.random() * 350));
-      }, 750));
+      }, lvl.stimMs));
     }
 
     btn.addEventListener("click", () => {
@@ -1190,7 +1272,7 @@ function renderGonogo(container) {
       if (resta <= 0) {
         clearInterval(timer);
         const punteggio = Math.max(hits - falsi, 0);
-        const isRecord = DB.submitScore("gonogo", "Semaforo", punteggio, "high");
+        const isRecord = DB.submitScore(`gonogo-${lvl.id}`, `Semaforo (${lvl.id})`, punteggio, "high");
         gameOverCard(container, {
           emoji: falsi <= 1 ? "🧘" : "🚦",
           titolo: falsi <= 1 ? "Freno di ferro!" : "Tempo scaduto!",
@@ -1199,7 +1281,7 @@ function renderGonogo(container) {
             `Partenze false sul rosso: <strong>${falsi}</strong>`,
             `Punteggio: <strong>${punteggio}</strong>`,
           ],
-          isRecord, replay: start,
+          isRecord, replay: () => start(lvl),
         });
       }
     }, 1000);

@@ -212,13 +212,18 @@ const App = (() => {
   /* ---------- viste ---------- */
   const main = document.getElementById("main");
 
-  /* filtri per neurodivergenza nelle pagine Giochi e Strumenti */
+  /* filtri per neurodivergenza e per età nelle pagine Giochi e Strumenti */
   const filtroND = { giochi: "tutte", strumenti: "tutte" };
+  const filtroEta = {
+    giochi: DB.state.settings.eta || "tutte",
+    strumenti: DB.state.settings.eta || "tutte",
+  };
 
   function ndChipsHTML(id) {
     const sch = typeof SCHEDE_SCIENZA !== "undefined" && SCHEDE_SCIENZA[id];
     if (!sch) return "";
-    return `<div class="nd-chips">${sch.nd.map(k => {
+    const eta = ETA_MIN[id] ? `<span class="nd-chip eta-chip">👤 ${ETA_MIN[id]}+ anni</span>` : "";
+    return `<div class="nd-chips">${eta}${sch.nd.map(k => {
       const n = ND_INFO[k];
       return `<span class="nd-chip ${n.classe}">${n.emoji} ${n.nome}</span>`;
     }).join("")}</div>`;
@@ -253,6 +258,21 @@ const App = (() => {
   function filtra(items, f) {
     if (f === "tutte") return items;
     return items.filter(x => (SCHEDE_SCIENZA[x.id]?.nd || []).includes(f));
+  }
+
+  function etaFilterRowHTML(attivo) {
+    const opzioni = [["tutte", "👥 Tutte le età"],
+      ...Object.entries(ETA_INFO).map(([k, e]) => [k, `${e.emoji} ${e.nome} ${e.range}`])];
+    return `
+      <div class="nd-filter-row" role="group" aria-label="Filtra per età">
+        ${opzioni.map(([k, label]) =>
+          `<button class="nd-filter ${attivo === k ? "active" : ""}" data-filter-eta="${k}" aria-pressed="${attivo === k}">${label}</button>`).join("")}
+      </div>`;
+  }
+
+  function filtraEta(items, fascia) {
+    if (fascia === "tutte" || !ETA_INFO[fascia]) return items;
+    return items.filter(x => (ETA_MIN[x.id] || 0) <= ETA_INFO[fascia].maxMin);
   }
 
   function tileHTML(item, tipo) {
@@ -363,20 +383,26 @@ const App = (() => {
 
   function viewGiochi() {
     const f = filtroND.giochi;
-    const items = filtra(GAMES, f);
+    const fe = filtroEta.giochi;
+    const items = filtraEta(filtra(GAMES, f), fe);
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
           <h1>🎮 La palestra della mente</h1>
-          <p>11 esercizi brevi su 6 domini cognitivi: memoria, attenzione, inibizione, flessibilità, tempo e senso del numero. Per menti neurodivergenti e per chiunque voglia allenarsi — con le fonti scientifiche in ogni scheda.</p>
+          <p>11 esercizi brevi su 6 domini cognitivi, ognuno con più livelli e l'età consigliata (dai 6 anni in su). Per menti neurodivergenti e per chiunque voglia allenarsi — con le fonti scientifiche in ogni scheda.</p>
         </div>
         ${workoutCardHTML()}
         ${filterRowHTML(f)}
+        ${etaFilterRowHTML(fe)}
         <div class="grid grid-3">${items.map(g => tileHTML(g, "gioco")).join("")}</div>
-        ${items.length === 0 ? `<p class="task-empty">Nessun gioco con questa etichetta (per ora!).</p>` : ""}
+        ${items.length === 0 ? `<p class="task-empty">Nessun gioco con questi filtri (per ora!).</p>` : ""}
       </div>`;
     main.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
       filtroND.giochi = b.dataset.filter;
+      viewGiochi();
+    }));
+    main.querySelectorAll("[data-filter-eta]").forEach(b => b.addEventListener("click", () => {
+      filtroEta.giochi = b.dataset.filterEta;
       viewGiochi();
     }));
   }
@@ -397,19 +423,25 @@ const App = (() => {
 
   function viewStrumenti() {
     const f = filtroND.strumenti;
-    const items = filtra(TOOLS, f);
+    const fe = filtroEta.strumenti;
+    const items = filtraEta(filtra(TOOLS, f), fe);
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
           <h1>🧰 Strumenti</h1>
-          <p>13 aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi, conoscersi. Filtra per neurodivergenza, e in ogni strumento scopri perché funziona, con le fonti.</p>
+          <p>13 aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi, conoscersi. Filtra per neurodivergenza o per età, e in ogni strumento scopri perché funziona, con le fonti.</p>
         </div>
         ${filterRowHTML(f)}
+        ${etaFilterRowHTML(fe)}
         <div class="grid grid-3">${items.map(t => tileHTML(t, "strumento")).join("")}</div>
-        ${items.length === 0 ? `<p class="task-empty">Nessuno strumento con questa etichetta (per ora!).</p>` : ""}
+        ${items.length === 0 ? `<p class="task-empty">Nessuno strumento con questi filtri (per ora!).</p>` : ""}
       </div>`;
     main.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
       filtroND.strumenti = b.dataset.filter;
+      viewStrumenti();
+    }));
+    main.querySelectorAll("[data-filter-eta]").forEach(b => b.addEventListener("click", () => {
+      filtroEta.strumenti = b.dataset.filterEta;
       viewStrumenti();
     }));
   }
@@ -825,6 +857,19 @@ const App = (() => {
         </div>
 
         <div class="card" style="margin-bottom:1.2rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.4rem">👤 Profilo età</h2>
+          <p style="color:var(--text-soft); font-size:.88rem; margin-bottom:.8rem">
+            Serve solo a consigliarti i livelli giusti (⭐ nei giochi) e a impostare il filtro per età. Resta sul tuo dispositivo, come tutto il resto.
+          </p>
+          <div class="seg" role="group" aria-label="Fascia d'età">
+            <button data-eta-opt="" class="${!st.eta ? "active" : ""}">Non dico</button>
+            <button data-eta-opt="bambini" class="${st.eta === "bambini" ? "active" : ""}">🧒 6–10</button>
+            <button data-eta-opt="ragazzi" class="${st.eta === "ragazzi" ? "active" : ""}">🧑 11–17</button>
+            <button data-eta-opt="adulti" class="${st.eta === "adulti" ? "active" : ""}">🧑‍💼 18+</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.2rem">
           <h2 style="font-size:1.1rem; margin-bottom:.8rem">🎨 Aspetto</h2>
           <div class="field">
             <label>Tema</label>
@@ -882,6 +927,15 @@ const App = (() => {
           <input type="file" data-file accept="application/json" style="display:none" aria-hidden="true">
         </div>
       </div>`;
+
+    main.querySelectorAll("[data-eta-opt]").forEach(b => b.addEventListener("click", () => {
+      st.eta = b.dataset.etaOpt || null;
+      DB.save();
+      filtroEta.giochi = st.eta || "tutte";
+      filtroEta.strumenti = st.eta || "tutte";
+      toast(st.eta ? `Profilo impostato: ${ETA_INFO[st.eta].nome} ${ETA_INFO[st.eta].range} 👤` : "Profilo rimosso");
+      viewImpostazioni();
+    }));
 
     main.querySelectorAll("[data-theme-opt]").forEach(b => b.addEventListener("click", () => {
       st.theme = b.dataset.themeOpt;

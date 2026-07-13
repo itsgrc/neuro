@@ -15,6 +15,7 @@ const DB = (() => {
       fontScale: 1,
       sounds: true,
       notifications: false,   // notifiche locali di fine timer
+      eta: null,              // fascia d'età: null | "bambini" | "ragazzi" | "adulti"
     },
     stats: {
       totalGames: 0,

@@ -43,7 +43,13 @@ Ogni gioco salva i record personali, sblocca badge 🏆 e include una scheda **"
 | 🧘 **Scansione corporea** (mindfulness guidata, 3/5 min) | 🌊 Ansia · ♾️ Autismo · per tutti | Khoury et al., 2013 |
 | ✨ **Tre cose buone** (diario della gratitudine) | 🌊 Ansia · per tutti | Seligman et al., 2005; Emmons & McCullough, 2003 |
 
-Nelle pagine Giochi e Strumenti puoi **filtrare per neurodivergenza** (ADHD, autismo, DSA, ansia/emozioni, Tourette).
+Nelle pagine Giochi e Strumenti puoi **filtrare per neurodivergenza** (ADHD, autismo, DSA, ansia/emozioni, Tourette) **e per fascia d'età**.
+
+### 👤 Età e livelli per ogni visitatore
+- Ogni gioco e strumento mostra l'**età minima indicativa** (6+, 8+, 10+…)
+- **Ogni gioco ha più livelli di difficoltà** con l'età consigliata esplicita ("consigliato 6–10 anni", "consigliato 11+", "sfida"): 3 colori/60s vs 4 colori/30s nello Stroop, ritmi lento/medio/serrato nel Semaforo e nella Sequenza, partenza da 2/3/4 blocchi nel Corsi, e così via
+- **Profilo età** facoltativo nelle Opzioni (bambini 6–10, ragazzi 11–17, adulti): evidenzia con ⭐ il livello consigliato e pre-imposta il filtro per età — resta solo sul dispositivo
+- Guida dedicata **"Per genitori e insegnanti"** nelle Risorse (con richiamo alla Legge 170/2010 e al PDP)
 
 ### 🎓 3 percorsi guidati di 7 giorni
 Micro-lezioni quotidiane con fonte scientifica + un'azione concreta al giorno:

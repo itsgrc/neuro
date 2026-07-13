@@ -221,6 +221,19 @@ const GUIDE_PRATICHE = [
     ]
   },
   {
+    id: "genitori",
+    emoji: "👨‍👩‍👧",
+    titolo: "Per genitori e insegnanti",
+    consigli: [
+      "Usate NeuroSpazio INSIEME, almeno all'inizio: per i bambini il gioco condiviso vale doppio e vi mostra come ragionano.",
+      "Le etichette con l'età (6+, 8+…) e i livelli “consigliato 6–10” sono indicativi: seguite il bambino reale, non l'etichetta.",
+      "Festeggiate lo sforzo e i tentativi, mai solo il punteggio: è il modo più solido di costruire motivazione.",
+      "Le routine guidate funzionano benissimo per mattina e compiti: costruitele con il bambino, non per il bambino.",
+      "A scuola, ricordate: con una diagnosi DSA la Legge 170/2010 dà diritto a strumenti compensativi e a un piano personalizzato (PDP).",
+      "Nessuna app sostituisce la valutazione di neuropsichiatria infantile o dei servizi per l'età evolutiva: se avete dubbi, partite dal pediatra."
+    ]
+  },
+  {
     id: "autostima",
     emoji: "💜",
     titolo: "Autostima e auto-compassione",
@@ -292,6 +305,24 @@ const BADGES = [
    cui è più utile e alla letteratura che ne descrive il
    meccanismo. Citazioni verificate e verificabili.
    ============================================================ */
+
+/* Fasce d'età: usate per consigliare giochi, strumenti e livelli.
+   Le età sono indicative: ogni persona ha i suoi tempi. */
+const ETA_INFO = {
+  bambini: { emoji: "🧒", nome: "Bambini", range: "6–10 anni", maxMin: 10 },
+  ragazzi: { emoji: "🧑", nome: "Ragazzi", range: "11–17 anni", maxMin: 17 },
+  adulti:  { emoji: "🧑‍💼", nome: "Adulti", range: "18+ anni", maxMin: 99 },
+};
+
+/* Età minima indicativa per ogni gioco e strumento */
+const ETA_MIN = {
+  /* giochi */
+  memoria: 6, stroop: 8, riflessi: 6, simon: 6, numeri: 7, flusso: 10,
+  tempo: 8, rotta: 7, stima: 6, corsi: 6, gonogo: 6,
+  /* strumenti */
+  pomodoro: 8, attivita: 8, dump: 10, abitudini: 6, umore: 6, routine: 6,
+  decisioni: 6, suoni: 6, respiro: 6, grounding: 8, sos: 6, bodyscan: 8, gratitudine: 8,
+};
 
 const ND_INFO = {
   adhd:     { emoji: "⚡",  nome: "ADHD",             classe: "nd-adhd" },
