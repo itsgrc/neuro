@@ -239,10 +239,10 @@ function renderMemoria(container) {
    ============================================================ */
 function renderStroop(container) {
   const COLORI = [
-    { nome: "ROSSO", css: "#e74c3c" },
-    { nome: "VERDE", css: "#27ae60" },
-    { nome: "BLU", css: "#2980b9" },
-    { nome: "GIALLO", css: "#d8a013" },
+    { nome: "ROSSO", css: "#e12e1c" },
+    { nome: "VERDE", css: "#1e864a" },
+    { nome: "BLU", css: "#287cb3" },
+    { nome: "GIALLO", css: "#966f0d" },
   ];
   const LIVELLI = [
     { id: "facile", nome: "Facile · 3 colori", colori: 3, durata: 60, eta: "consigliato 8–10 anni" },

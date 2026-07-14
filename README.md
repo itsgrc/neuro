@@ -81,18 +81,32 @@ Ogni scheda cita fonti accademiche verificate (53 riferimenti in bibliografia, c
 Spiegazioni chiare e rispettose su ADHD, autismo, dislessia, discalculia, disgrafia, Tourette, funzioni esecutive ed emozioni intense, con strategie concrete, guide pratiche (studio, lavoro, casa, sonno, relazioni, autostima) e indicazioni su dove trovare aiuto in Italia.
 
 ### 🏆 Progressi e motivazione
-Streak giornaliera, statistiche, record dei giochi, grafico dell'umore e 13 badge da sbloccare: la dopamina giusta al momento giusto.
+Streak giornaliera, statistiche, record dei giochi, grafico dell'umore e 18 badge da sbloccare: la dopamina giusta al momento giusto. Dalla pagina Progressi puoi anche **generare una card condivisibile** (Canvas) con i tuoi dati reali — streak, badge, allenamenti — zero numeri finti, perché l'app non ha analytics con cui inventarli.
 
-### ♿ Accessibilità
-- Tema chiaro / scuro / automatico
+### ♿ Accessibilità (WCAG 2.2 AA verificata)
+- Tema chiaro / scuro / automatico, con **contrasto colore verificato con axe-core** (zero violazioni, tema chiaro e scuro)
 - **Modalità dislessia** (font leggibile, spaziatura ampia)
 - **Riduzione animazioni** (anche via `prefers-reduced-motion`)
 - 4 dimensioni del testo
-- Suoni disattivabili, navigazione da tastiera, etichette ARIA
+- Navigazione da tastiera completa, con **focus trap e chiusura Esc** sulla Carta SOS (il componente più critico)
+- Suoni disattivabili, etichette ARIA, landmark semantici
 - Layout mobile-first con barra di navigazione inferiore
+- **[Dichiarazione di accessibilità](#) pubblica** (`#/accessibilita`) con impegno, verifiche e limiti dichiarati onestamente
+
+### 🌐 Bilingue italiano/inglese
+Selettore di lingua in alto e nelle Opzioni. Tradotti in inglese: navigazione, home, elenco giochi/strumenti con le schede scientifiche brevi, i 3 test di screening per intero (con formulazione internazionale standard), "Inizia da qui", Privacy e Accessibilità. I contenuti lunghi (percorsi giorno-per-giorno, schede complete delle Risorse) restano solo in italiano, con un avviso onesto invece di traduzioni parziali o rotte.
+
+### 🏫 Modalità Classe
+Profili multipli locali sullo stesso dispositivo (`#/classe`), pensati per un computer o tablet condiviso in aula: ogni studente ha progressi isolati, e un cruscotto insegnante li confronta leggendo direttamente dal localStorage del browser — nessuna sincronizzazione, nessun dato che lascia il dispositivo.
 
 ## 🔒 Privacy
-Tutti i dati (attività, umore, record…) restano **solo nel tuo browser** (localStorage). Niente account, niente tracciamento, niente server. Dalle Opzioni puoi esportare/importare un backup o cancellare tutto.
+Tutti i dati (attività, umore, record…) restano **solo nel tuo browser** (localStorage). Niente account, niente tracciamento, niente server. Dalle Opzioni puoi esportare/importare un backup o cancellare tutto. Spiegazione completa, in parole semplici, nella pagina **Privacy** (`#/privacy`), con riferimento al principio di minimizzazione dei dati del GDPR (Art. 5.1.c).
+
+## 🔬 Per ricercatori, 💜 Sostienici, 📰 Media kit
+Tre pagine di trasparenza radicale, raggiungibili dal footer:
+- **`#/ricerca`** — cosa possiamo e non possiamo affermare scientificamente su NeuroSpazio stesso (le tecniche sottostanti hanno prove; questa specifica implementazione non ha validazione clinica indipendente propria), con invito aperto a collaborazioni di ricerca vere
+- **`#/sostieni`** — perché non c'è pubblicità (l'economia dell'attenzione è un rischio particolare per l'ADHD: Volkow et al., 2009) e come l'app resta gratis senza costi di infrastruttura da ripagare
+- **`#/media`** — fatti reali e verificabili per stampa/educatori, zero testimonianze o numeri inventati
 
 ## 🚀 Come usarla
 Nessuna build, nessuna dipendenza: è HTML/CSS/JS puro.
@@ -107,6 +121,23 @@ python3 -m http.server 8000
 ```
 
 Funziona anche pubblicata così com'è su GitHub Pages o qualsiasi hosting statico.
+
+## 📱 Verso gli app store (App Store / Google Play)
+NeuroSpazio è già una **PWA installabile** (`manifest.webmanifest` + `sw.js`): su Android, "Aggiungi a schermata Home" installa già un'app quasi indistinguibile da una nativa. Per pubblicarla davvero sugli store servono passi che **richiedono account e strumenti dell'utente**, non eseguibili da qui:
+
+1. **Wrapping con [Capacitor](https://capacitorjs.com/)** (consigliato, zero riscrittura):
+   ```bash
+   npm init -y && npm install @capacitor/core @capacitor/cli
+   npx cap init NeuroSpazio com.tuodominio.neurospazio
+   npx cap add ios      # richiede Xcode (solo su Mac)
+   npx cap add android  # richiede Android Studio
+   npx cap copy && npx cap open ios     # o android
+   ```
+2. **Account sviluppatore**: Apple Developer Program (99$/anno) per l'App Store, Google Play Console (25$ una tantum) per Play Store — nessuno dei due è attivabile senza i dati di pagamento e l'identità reale del proprietario dell'app.
+3. **Firma del codice e build native**: richiedono Xcode/Android Studio su una macchina reale, oltre a certificati di firma personali — non riproducibili in questo ambiente sandboxed.
+4. **Revisione dello store**: entrambi gli store richiedono una privacy policy pubblica (già pronta: pagina `#/privacy` dentro l'app) e possono richiedere settimane di review.
+
+In sintesi: il codice è pronto per il wrapping, ma la pubblicazione vera è un passo che solo il proprietario del progetto può completare, con i propri account.
 
 ## 🗂️ Struttura
 ```

@@ -206,8 +206,32 @@ const App = (() => {
     html.classList.toggle("dyslexia", st.dyslexia);
     html.classList.toggle("reduce-motion", st.reduceMotion);
     html.style.setProperty("--font-scale", st.fontScale);
+    applyI18n();
   }
   mediaScuro.addEventListener("change", applySettings);
+
+  /* ---------- lingua (it/en) ---------- */
+  function lang() { return DB.state.settings.lang === "en" ? "en" : "it"; }
+  function t(key) { return (I18N[lang()] && I18N[lang()][key]) || I18N.it[key] || key; }
+
+  function applyI18n() {
+    const l = lang();
+    document.documentElement.lang = l; // essenziale per i lettori di schermo
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+    const toggle = document.getElementById("lang-toggle");
+    if (toggle) toggle.setAttribute("aria-label", l === "it" ? "Cambia lingua: passa a Inglese" : "Change language: switch to Italian");
+  }
+
+  function nomeLocalizzato(item, mappa) {
+    return lang() === "en" && mappa[item.id] ? mappa[item.id].nome : item.nome;
+  }
+  function descLocalizzato(item, mappa) {
+    return lang() === "en" && mappa[item.id] ? mappa[item.id].desc : item.desc;
+  }
+  function onlyItNoticeHTML() {
+    return lang() === "en" ? `<div class="only-it-notice">${t("only_it_notice")}</div>` : "";
+  }
 
   /* ---------- viste ---------- */
   const main = document.getElementById("main");
@@ -222,10 +246,12 @@ const App = (() => {
   function ndChipsHTML(id) {
     const sch = typeof SCHEDE_SCIENZA !== "undefined" && SCHEDE_SCIENZA[id];
     if (!sch) return "";
-    const eta = ETA_MIN[id] ? `<span class="nd-chip eta-chip">👤 ${ETA_MIN[id]}+ anni</span>` : "";
+    const etaLabel = lang() === "en" ? `${ETA_MIN[id]}+ years` : `${ETA_MIN[id]}+ anni`;
+    const eta = ETA_MIN[id] ? `<span class="nd-chip eta-chip">👤 ${etaLabel}</span>` : "";
     return `<div class="nd-chips">${eta}${sch.nd.map(k => {
       const n = ND_INFO[k];
-      return `<span class="nd-chip ${n.classe}">${n.emoji} ${n.nome}</span>`;
+      const nome = lang() === "en" ? ND_INFO_EN[k] : n.nome;
+      return `<span class="nd-chip ${n.classe}">${n.emoji} ${nome}</span>`;
     }).join("")}</div>`;
   }
 
@@ -233,23 +259,26 @@ const App = (() => {
     const sch = typeof SCHEDE_SCIENZA !== "undefined" && SCHEDE_SCIENZA[id];
     if (!sch) return "";
     const fonti = sch.fonti.map(fid => FONTI.find(f => f.id === fid)).filter(Boolean);
+    const perche = lang() === "en" && SCIENZA_EN[id] ? SCIENZA_EN[id] : sch.perche;
+    const summaryLabel = lang() === "en" ? "🔬 Who it's for and why it works" : "🔬 Per chi è pensato e perché funziona";
+    const bibLabel = lang() === "en" ? "📚 Full bibliography →" : "📚 Tutta la bibliografia →";
     return `
       <div class="science-box">
         ${ndChipsHTML(id)}
         <details>
-          <summary>🔬 Per chi è pensato e perché funziona</summary>
-          <p class="science-body">${sch.perche}</p>
+          <summary>${summaryLabel}</summary>
+          <p class="science-body">${perche}</p>
           <ul class="fonti-mini">${fonti.map(f => `<li>${f.testo}</li>`).join("")}</ul>
-          <a href="#/risorse" style="font-size:.85rem; font-weight:700">📚 Tutta la bibliografia →</a>
+          <a href="#/risorse" style="font-size:.85rem; font-weight:700">${bibLabel}</a>
         </details>
       </div>`;
   }
 
   function filterRowHTML(attivo) {
-    const opzioni = [["tutte", "✨ Per tutti"],
-      ...Object.entries(ND_INFO).map(([k, n]) => [k, `${n.emoji} ${n.nome}`])];
+    const opzioni = [["tutte", lang() === "en" ? "✨ For everyone" : "✨ Per tutti"],
+      ...Object.entries(ND_INFO).map(([k, n]) => [k, `${n.emoji} ${lang() === "en" ? ND_INFO_EN[k] : n.nome}`])];
     return `
-      <div class="nd-filter-row" role="group" aria-label="Filtra per neurodivergenza">
+      <div class="nd-filter-row" role="group" aria-label="${lang() === "en" ? "Filter by neurodivergence" : "Filtra per neurodivergenza"}">
         ${opzioni.map(([k, label]) =>
           `<button class="nd-filter ${attivo === k ? "active" : ""}" data-filter="${k}" aria-pressed="${attivo === k}">${label}</button>`).join("")}
       </div>`;
@@ -261,10 +290,13 @@ const App = (() => {
   }
 
   function etaFilterRowHTML(attivo) {
-    const opzioni = [["tutte", "👥 Tutte le età"],
-      ...Object.entries(ETA_INFO).map(([k, e]) => [k, `${e.emoji} ${e.nome} ${e.range}`])];
+    const en = lang() === "en";
+    const opzioni = [["tutte", en ? "👥 All ages" : "👥 Tutte le età"],
+      ...Object.entries(ETA_INFO).map(([k, e]) => [k, en
+        ? `${e.emoji} ${ETA_INFO_EN[k].nome} ${ETA_INFO_EN[k].range}`
+        : `${e.emoji} ${e.nome} ${e.range}`])];
     return `
-      <div class="nd-filter-row" role="group" aria-label="Filtra per età">
+      <div class="nd-filter-row" role="group" aria-label="${en ? "Filter by age" : "Filtra per età"}">
         ${opzioni.map(([k, label]) =>
           `<button class="nd-filter ${attivo === k ? "active" : ""}" data-filter-eta="${k}" aria-pressed="${attivo === k}">${label}</button>`).join("")}
       </div>`;
@@ -276,19 +308,23 @@ const App = (() => {
   }
 
   function tileHTML(item, tipo) {
+    const mappa = tipo === "gioco" ? GAMES_EN : TOOLS_EN;
     return `
       <a class="tile" href="#/${tipo}/${item.id}">
         <span class="tile-emoji" aria-hidden="true">${item.emoji}</span>
-        <h3>${item.nome}</h3>
-        <p>${item.desc}</p>
+        <h3>${nomeLocalizzato(item, mappa)}</h3>
+        <p>${descLocalizzato(item, mappa)}</p>
         <span class="tile-tag tag-${item.tag}">${item.tag}</span>
         ${ndChipsHTML(item.id)}
       </a>`;
   }
 
   function viewHome() {
+    const en = lang() === "en";
     const ora = new Date().getHours();
-    const saluto = ora < 6 ? "Notte fonda, eh?" : ora < 13 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera";
+    const saluto = en
+      ? (ora < 6 ? "Up late, huh?" : ora < 13 ? "Good morning" : ora < 18 ? "Good afternoon" : "Good evening")
+      : (ora < 6 ? "Notte fonda, eh?" : ora < 13 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera");
     const s = DB.state.stats;
     const oggiTasks = DB.state.tasks.filter(t => t.col === "oggi").length;
     const tip = CONSIGLI_DEL_GIORNO[Math.floor((Date.now() / 86400000)) % CONSIGLI_DEL_GIORNO.length];
@@ -297,90 +333,97 @@ const App = (() => {
       <div class="view">
         <section class="hero">
           <h1>${saluto}! 👋</h1>
-          <p>La tua palestra della mente e il tuo spazio sicuro: esercizi con basi scientifiche, strumenti per le giornate storte e quelle buone. Pensato per menti neurodivergenti, utile a chiunque abbia un cervello. Senza giudizi, al tuo ritmo.</p>
-          <div class="streak-pill">🔥 ${s.visitStreak} ${s.visitStreak === 1 ? "giorno" : "giorni"} di fila qui</div>
+          <p>${en
+            ? "Your mind gym and safe space: science-based exercises, tools for rough days and good ones. Built for neurodivergent minds, useful to anyone with a brain. No judgment, your own pace."
+            : "La tua palestra della mente e il tuo spazio sicuro: esercizi con basi scientifiche, strumenti per le giornate storte e quelle buone. Pensato per menti neurodivergenti, utile a chiunque abbia un cervello. Senza giudizi, al tuo ritmo."}</p>
+          <div class="streak-pill">🔥 ${s.visitStreak} ${en ? (s.visitStreak === 1 ? "day" : "days") + " in a row here" : (s.visitStreak === 1 ? "giorno" : "giorni") + " di fila qui"}</div>
           <div class="btn-row" style="margin-top:1rem">
-            <a class="btn" style="background:#fff; color:var(--primary)" href="#/inizia">🧭 Inizia da qui</a>
-            <a class="btn btn-ghost" style="border-color:rgba(255,255,255,.6); color:#fff" href="#/test">📋 Test di screening</a>
+            <a class="btn hero-btn-solid" href="#/inizia">🧭 ${en ? "Start here" : "Inizia da qui"}</a>
+            <a class="btn btn-ghost" style="border-color:rgba(255,255,255,.6); color:#fff" href="#/test">📋 ${en ? "Screening tests" : "Test di screening"}</a>
           </div>
         </section>
 
         <div class="tip-card" style="margin-bottom:1.4rem">
           <span class="tip-emoji" aria-hidden="true">💡</span>
-          <div><strong>Consiglio del giorno</strong><br>${tip}</div>
+          <div><strong>${en ? "Tip of the day" : "Consiglio del giorno"}</strong><br>${en ? "Daily tips are only available in Italian for now. 🇮🇹" : tip}</div>
         </div>
 
-        <h2 style="font-size:1.15rem; margin-bottom:.6rem">Di cosa hai bisogno adesso?</h2>
+        <h2 style="font-size:1.15rem; margin-bottom:.6rem">${en ? "What do you need right now?" : "Di cosa hai bisogno adesso?"}</h2>
         <div class="quick-row">
-          <a class="quick-btn" href="#/strumento/pomodoro"><span class="q-emoji">🍅</span>Devo concentrarmi</a>
-          <a class="quick-btn" href="#/strumento/grounding"><span class="q-emoji">🆘</span>È tutto troppo</a>
-          <a class="quick-btn" href="#/strumento/attivita"><span class="q-emoji">✅</span>Organizzarmi</a>
-          <a class="quick-btn" href="#/strumento/dump"><span class="q-emoji">🧺</span>Testa piena</a>
-          <a class="quick-btn" href="#/strumento/respiro"><span class="q-emoji">🫁</span>Calmarmi</a>
-          <a class="quick-btn" href="#/giochi"><span class="q-emoji">🎮</span>Giocare un po'</a>
-          <a class="quick-btn" href="#/percorsi"><span class="q-emoji">🎓</span>Un passo al giorno</a>
-          <a class="quick-btn" href="#/strumento/sos"><span class="q-emoji">🆘</span>Carta SOS</a>
+          <a class="quick-btn" href="#/strumento/pomodoro"><span class="q-emoji">🍅</span>${en ? "I need to focus" : "Devo concentrarmi"}</a>
+          <a class="quick-btn" href="#/strumento/grounding"><span class="q-emoji">🆘</span>${en ? "It's all too much" : "È tutto troppo"}</a>
+          <a class="quick-btn" href="#/strumento/attivita"><span class="q-emoji">✅</span>${en ? "Get organized" : "Organizzarmi"}</a>
+          <a class="quick-btn" href="#/strumento/dump"><span class="q-emoji">🧺</span>${en ? "Full head" : "Testa piena"}</a>
+          <a class="quick-btn" href="#/strumento/respiro"><span class="q-emoji">🫁</span>${en ? "Calm down" : "Calmarmi"}</a>
+          <a class="quick-btn" href="#/giochi"><span class="q-emoji">🎮</span>${en ? "Play a bit" : "Giocare un po'"}</a>
+          <a class="quick-btn" href="#/percorsi"><span class="q-emoji">🎓</span>${en ? "One step a day" : "Un passo al giorno"}</a>
+          <a class="quick-btn" href="#/strumento/sos"><span class="q-emoji">🆘</span>${en ? "SOS Card" : "Carta SOS"}</a>
         </div>
 
         <div class="today-summary">
-          <div class="stat-box"><div class="stat-num">${oggiTasks}</div><div class="stat-label">attività per oggi</div></div>
-          <div class="stat-box"><div class="stat-num">${s.totalPomodoros}</div><div class="stat-label">sessioni di focus</div></div>
-          <div class="stat-box"><div class="stat-num">${s.totalGames}</div><div class="stat-label">partite giocate</div></div>
-          <div class="stat-box"><div class="stat-num">${DB.state.badges.length}/${BADGES.length}</div><div class="stat-label">badge sbloccati</div></div>
+          <div class="stat-box"><div class="stat-num">${oggiTasks}</div><div class="stat-label">${en ? "tasks for today" : "attività per oggi"}</div></div>
+          <div class="stat-box"><div class="stat-num">${s.totalPomodoros}</div><div class="stat-label">${en ? "focus sessions" : "sessioni di focus"}</div></div>
+          <div class="stat-box"><div class="stat-num">${s.totalGames}</div><div class="stat-label">${en ? "games played" : "partite giocate"}</div></div>
+          <div class="stat-box"><div class="stat-num">${DB.state.badges.length}/${BADGES.length}</div><div class="stat-label">${en ? "badges unlocked" : "badge sbloccati"}</div></div>
         </div>
 
-        <div class="home-section-title"><h2>🎓 Percorsi guidati</h2><a href="#/percorsi">Tutti i percorsi →</a></div>
+        <div class="home-section-title"><h2>🎓 ${en ? "Guided paths" : "Percorsi guidati"}</h2><a href="#/percorsi">${en ? "All paths →" : "Tutti i percorsi →"}</a></div>
         <div class="grid grid-3">
           ${PERCORSI.map(p => {
             const fatti = (DB.state.percorsi[p.id] || []).length;
+            const pp = en && PERCORSI_EN[p.id] ? PERCORSI_EN[p.id] : p;
             return `<a class="tile" href="#/percorso/${p.id}">
               <span class="tile-emoji" aria-hidden="true">${p.emoji}</span>
-              <h3>${p.nome}</h3>
-              <p>${p.desc}</p>
+              <h3>${pp.nome}</h3>
+              <p>${pp.desc}</p>
               <div class="percorso-progress"><div style="width:${(fatti / 7) * 100}%"></div></div>
-              <span class="tile-tag">${fatti}/7 giorni</span>
+              <span class="tile-tag">${fatti}/7 ${en ? "days" : "giorni"}</span>
             </a>`;
           }).join("")}
         </div>
 
-        <div class="home-section-title"><h2>🏋️ Allenamento del giorno</h2><a href="#/giochi">Tutta la palestra →</a></div>
+        <div class="home-section-title"><h2>🏋️ ${en ? "Workout of the day" : "Allenamento del giorno"}</h2><a href="#/giochi">${en ? "Whole gym →" : "Tutta la palestra →"}</a></div>
         <div class="grid grid-3">${workoutOggi().map(g => tileHTML(g, "gioco")).join("")}</div>
 
-        <div class="home-section-title"><h2>🧰 Strumenti del giorno</h2><a href="#/strumenti">Tutti gli strumenti →</a></div>
+        <div class="home-section-title"><h2>🧰 ${en ? "Tools of the day" : "Strumenti del giorno"}</h2><a href="#/strumenti">${en ? "All tools →" : "Tutti gli strumenti →"}</a></div>
         <div class="grid grid-3">${[TOOLS[0], TOOLS[4], TOOLS[8]].map(t => tileHTML(t, "strumento")).join("")}</div>
       </div>`;
   }
 
   function workoutCardHTML() {
+    const en = lang() === "en";
     const k = DB.todayKey();
     const giocatiOggi = DB.state.playedByDay[k] || [];
     const piano = workoutOggi();
     const fattiOggi = piano.filter(g => giocatiOggi.includes(g.id)).length;
     const completato = DB.state.workoutDays[k];
+    const giorniLabel = en ? ["S", "M", "T", "W", "T", "F", "S"] : ["D", "L", "M", "M", "G", "V", "S"];
     return `
       <div class="card workout-card">
         <div class="workout-head">
-          <h2>🏋️ Allenamento del giorno</h2>
-          <span class="workout-count ${completato ? "completo" : ""}">${completato ? "✅ Completato!" : `${fattiOggi}/3 esercizi`}</span>
+          <h2>🏋️ ${en ? "Workout of the day" : "Allenamento del giorno"}</h2>
+          <span class="workout-count ${completato ? "completo" : ""}">${completato ? `✅ ${en ? "Completed!" : "Completato!"}` : `${fattiOggi}/3 ${en ? "exercises" : "esercizi"}`}</span>
         </div>
-        <p class="workout-note">Il circuito di oggi tocca 3 domini cognitivi diversi e ruota ogni giorno: 10 minuti al giorno battono 2 ore la domenica (pratica distribuita: Cepeda et al., 2006).</p>
+        <p class="workout-note">${en
+          ? "Today's circuit touches 3 different cognitive domains and rotates daily: 10 minutes a day beats 2 hours on Sunday (distributed practice: Cepeda et al., 2006)."
+          : "Il circuito di oggi tocca 3 domini cognitivi diversi e ruota ogni giorno: 10 minuti al giorno battono 2 ore la domenica (pratica distribuita: Cepeda et al., 2006)."}</p>
         <div class="workout-games">
           ${piano.map(g => `
             <a class="workout-game ${giocatiOggi.includes(g.id) ? "fatto" : ""}" href="#/gioco/${g.id}">
               <span class="wg-emoji">${g.emoji}</span>
-              <span class="wg-nome">${g.nome}</span>
+              <span class="wg-nome">${nomeLocalizzato(g, GAMES_EN)}</span>
               <span class="wg-stato">${giocatiOggi.includes(g.id) ? "✅" : "▶️"}</span>
             </a>`).join("")}
         </div>
-        <div class="workout-week" aria-label="Allenamenti degli ultimi 7 giorni">
+        <div class="workout-week" role="group" aria-label="${en ? "Workouts in the last 7 days" : "Allenamenti degli ultimi 7 giorni"}">
           ${Array.from({ length: 7 }, (_, i) => {
             const key = DB.todayKey(-(6 - i));
             const d = new Date(); d.setDate(d.getDate() - (6 - i));
             return `<div class="ww-day ${DB.state.workoutDays[key] ? "hit" : ""} ${i === 6 ? "today" : ""}">
-              <span>${["D", "L", "M", "M", "G", "V", "S"][d.getDay()]}</span>
+              <span>${giorniLabel[d.getDay()]}</span>
             </div>`;
           }).join("")}
-          <span class="ww-tot">🏅 ${DB.state.stats.workoutsDone} totali</span>
+          <span class="ww-tot">🏅 ${DB.state.stats.workoutsDone} ${en ? "total" : "totali"}</span>
         </div>
       </div>`;
   }
@@ -389,17 +432,20 @@ const App = (() => {
     const f = filtroND.giochi;
     const fe = filtroEta.giochi;
     const items = filtraEta(filtra(GAMES, f), fe);
+    const en = lang() === "en";
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
-          <h1>🎮 La palestra della mente</h1>
-          <p>11 esercizi brevi su 6 domini cognitivi, ognuno con più livelli e l'età consigliata (dai 6 anni in su). Per menti neurodivergenti e per chiunque voglia allenarsi — con le fonti scientifiche in ogni scheda.</p>
+          <h1>🎮 ${en ? "The mind gym" : "La palestra della mente"}</h1>
+          <p>${en
+            ? "11 short exercises across 6 cognitive domains, each with several levels and a recommended age (from 6 years up). For neurodivergent minds and for anyone who wants to train — with scientific sources on every card."
+            : "11 esercizi brevi su 6 domini cognitivi, ognuno con più livelli e l'età consigliata (dai 6 anni in su). Per menti neurodivergenti e per chiunque voglia allenarsi — con le fonti scientifiche in ogni scheda."}</p>
         </div>
         ${workoutCardHTML()}
         ${filterRowHTML(f)}
         ${etaFilterRowHTML(fe)}
         <div class="grid grid-3">${items.map(g => tileHTML(g, "gioco")).join("")}</div>
-        ${items.length === 0 ? `<p class="task-empty">Nessun gioco con questi filtri (per ora!).</p>` : ""}
+        ${items.length === 0 ? `<p class="task-empty">${en ? "No games match these filters (for now!)." : "Nessun gioco con questi filtri (per ora!)."}</p>` : ""}
       </div>`;
     main.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
       filtroND.giochi = b.dataset.filter;
@@ -415,11 +461,15 @@ const App = (() => {
     const g = GAMES.find(x => x.id === id);
     if (!g) return navigate("/giochi");
     currentGameId = g.id;
+    const nome = nomeLocalizzato(g, GAMES_EN);
+    document.title = `${nome} — NeuroSpazio`;
+    const backLabel = lang() === "en" ? "← All games" : "← Tutti i giochi";
     main.innerHTML = `
       <div class="view game-shell">
-        <a class="back-link" href="#/giochi">← Tutti i giochi</a>
-        <div class="page-head"><h1>${g.emoji} ${g.nome}</h1></div>
+        <a class="back-link" href="#/giochi">${backLabel}</a>
+        <div class="page-head"><h1>${g.emoji} ${nome}</h1></div>
         ${scienceBoxHTML(g.id)}
+        ${onlyItNoticeHTML()}
         <div data-game></div>
       </div>`;
     g.render(main.querySelector("[data-game]"));
@@ -429,16 +479,19 @@ const App = (() => {
     const f = filtroND.strumenti;
     const fe = filtroEta.strumenti;
     const items = filtraEta(filtra(TOOLS, f), fe);
+    const en = lang() === "en";
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
-          <h1>🧰 Strumenti</h1>
-          <p>13 aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi, conoscersi. Filtra per neurodivergenza o per età, e in ogni strumento scopri perché funziona, con le fonti.</p>
+          <h1>🧰 ${en ? "Tools" : "Strumenti"}</h1>
+          <p>${en
+            ? "13 concrete aids for everyday challenges: focusing, organizing, calming down, knowing yourself. Filter by neurodivergence or age, and discover why each tool works, sources included."
+            : "13 aiuti concreti per le sfide di ogni giorno: concentrarsi, organizzarsi, calmarsi, conoscersi. Filtra per neurodivergenza o per età, e in ogni strumento scopri perché funziona, con le fonti."}</p>
         </div>
         ${filterRowHTML(f)}
         ${etaFilterRowHTML(fe)}
         <div class="grid grid-3">${items.map(t => tileHTML(t, "strumento")).join("")}</div>
-        ${items.length === 0 ? `<p class="task-empty">Nessuno strumento con questi filtri (per ora!).</p>` : ""}
+        ${items.length === 0 ? `<p class="task-empty">${en ? "No tools match these filters (for now!)." : "Nessuno strumento con questi filtri (per ora!)."}</p>` : ""}
       </div>`;
     main.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
       filtroND.strumenti = b.dataset.filter;
@@ -453,11 +506,15 @@ const App = (() => {
   function viewStrumento(id) {
     const t = TOOLS.find(x => x.id === id);
     if (!t) return navigate("/strumenti");
+    const nome = nomeLocalizzato(t, TOOLS_EN);
+    document.title = `${nome} — NeuroSpazio`;
+    const backLabel = lang() === "en" ? "← All tools" : "← Tutti gli strumenti";
     main.innerHTML = `
       <div class="view game-shell" style="max-width:820px">
-        <a class="back-link" href="#/strumenti">← Tutti gli strumenti</a>
-        <div class="page-head"><h1>${t.emoji} ${t.nome}</h1></div>
+        <a class="back-link" href="#/strumenti">${backLabel}</a>
+        <div class="page-head"><h1>${t.emoji} ${nome}</h1></div>
         ${scienceBoxHTML(t.id)}
+        ${onlyItNoticeHTML()}
         <div data-tool></div>
       </div>`;
     t.render(main.querySelector("[data-tool]"));
@@ -470,6 +527,7 @@ const App = (() => {
           <h1>📚 Risorse</h1>
           <p>Capire come funziona il proprio cervello è il primo superpotere. Qui trovi spiegazioni semplici e strategie concrete, scritte con rispetto.</p>
         </div>
+        ${onlyItNoticeHTML()}
 
         <div class="help-banner">
           <h2>🤝 ${AIUTO_ITALIA.titolo}</h2>
@@ -551,8 +609,10 @@ const App = (() => {
         <div class="page-head">
           <h1>🏆 I tuoi progressi</h1>
           <p>Ogni piccolo passo è registrato qui. Guarda quanta strada hai fatto — anche nei giorni in cui non sembrava.</p>
+          ${onlyItNoticeHTML()}
           <div class="btn-row" style="margin-top:.6rem">
             <a class="btn btn-soft" href="#/report">🖨️ Report per il professionista</a>
+            <button class="btn btn-soft" data-condividi>📤 Condividi i tuoi progressi</button>
           </div>
         </div>
 
@@ -620,6 +680,87 @@ const App = (() => {
           <p style="color:var(--text-soft); font-size:.85rem; margin-top:.6rem">Registra come stai in <a href="#/strumento/umore">Come sto oggi</a>.</p>
         </div>
       </div>`;
+
+    main.querySelector("[data-condividi]").addEventListener("click", condividiTraguardi);
+  }
+
+  /** Disegna una card 1080×1080 con i TUOI dati reali (streak, badge, allenamenti) —
+      niente numeri finti, niente "utenti online": solo ciò che hai fatto davvero. */
+  async function condividiTraguardi() {
+    const s = DB.state.stats;
+    const size = 1080;
+    const canvas = document.createElement("canvas");
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext("2d");
+
+    const grad = ctx.createLinearGradient(0, 0, size, size);
+    grad.addColorStop(0, "#4834e1");
+    grad.addColorStop(1, "#a6145b");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffffff";
+
+    ctx.font = "160px system-ui, sans-serif";
+    ctx.fillText("🧠", size / 2, 260);
+
+    ctx.font = "900 64px system-ui, sans-serif";
+    ctx.fillText("NeuroSpazio", size / 2, 360);
+
+    ctx.font = "600 32px system-ui, sans-serif";
+    ctx.globalAlpha = 0.85;
+    ctx.fillText(lang() === "en" ? "My progress" : "I miei progressi", size / 2, 420);
+    ctx.globalAlpha = 1;
+
+    const stats = [
+      [`🔥 ${s.visitStreak}`, lang() === "en" ? "day streak" : (s.visitStreak === 1 ? "giorno di fila" : "giorni di fila")],
+      [`🏅 ${DB.state.badges.length}/${BADGES.length}`, lang() === "en" ? "badges" : "badge"],
+      [`🏋️ ${s.workoutsDone}`, lang() === "en" ? "workouts" : "allenamenti"],
+    ];
+    const colW = size / 3;
+    stats.forEach(([num, label], i) => {
+      const cx = colW * i + colW / 2;
+      ctx.font = "900 76px system-ui, sans-serif";
+      ctx.fillText(num, cx, 620);
+      ctx.font = "500 28px system-ui, sans-serif";
+      ctx.globalAlpha = 0.85;
+      ctx.fillText(label, cx, 665);
+      ctx.globalAlpha = 1;
+    });
+
+    ctx.font = "600 30px system-ui, sans-serif";
+    ctx.globalAlpha = 0.9;
+    ctx.fillText(
+      lang() === "en" ? "The mind gym for ADHD, autism, and more" : "La palestra della mente per ADHD, autismo e non solo",
+      size / 2, 900
+    );
+    ctx.globalAlpha = 1;
+    ctx.font = "500 26px system-ui, sans-serif";
+    ctx.globalAlpha = 0.7;
+    ctx.fillText("neurospazio", size / 2, 950);
+    ctx.globalAlpha = 1;
+
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    const file = new File([blob], "neurospazio-progressi.png", { type: "image/png" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "NeuroSpazio",
+          text: lang() === "en" ? "My progress on NeuroSpazio" : "I miei progressi su NeuroSpazio",
+        });
+        return;
+      } catch (e) { /* utente ha annullato la condivisione, va bene */ }
+    }
+    // ripiego: scarica l'immagine
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "neurospazio-progressi.png";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(lang() === "en" ? "Image downloaded 📤" : "Immagine scaricata 📤");
   }
 
   /* ---------- percorsi guidati ---------- */
@@ -630,6 +771,7 @@ const App = (() => {
           <h1>🎓 Percorsi guidati</h1>
           <p>Sette giorni, un passo al giorno: una micro-lezione basata sulla ricerca (fonte inclusa) e un'azione concreta da fare subito. Niente maratone: la dose è pensata per cervelli veri.</p>
         </div>
+        ${onlyItNoticeHTML()}
         <div class="grid grid-2">
           ${PERCORSI.map(p => {
             const fatti = (DB.state.percorsi[p.id] || []).length;
@@ -660,6 +802,7 @@ const App = (() => {
           <h1>${p.emoji} ${p.nome}</h1>
           <p>${p.desc}</p>
         </div>
+        ${onlyItNoticeHTML()}
         <div class="percorso-progress" style="margin-bottom:1.2rem"><div style="width:${(fatti.length / 7) * 100}%"></div></div>
         ${p.giorni.map((g, i) => {
           const done = fatti.includes(i);
@@ -787,6 +930,7 @@ const App = (() => {
     main.innerHTML = `
       <div class="view report-page" style="max-width:760px; margin:0 auto">
         <a class="back-link no-print" href="#/progressi">← Ai progressi</a>
+        ${lang() === "en" ? `<div class="no-print">${onlyItNoticeHTML()}</div>` : ""}
         <div class="card">
           <h1 style="font-size:1.5rem">🧠 NeuroSpazio — Report personale</h1>
           <p style="color:var(--text-soft)">Generato il ${oggi} · dati auto-registrati dall'utente sul proprio dispositivo</p>
@@ -853,94 +997,67 @@ const App = (() => {
 
   /* ---------- inizia da qui: scelta diretta, senza test ---------- */
   function viewInizia() {
+    const en = lang() === "en";
+    const CARDS = [
+      { emoji: "🧘", it: ["Rilassarmi", "Calmare corpo e mente, adesso."], en: ["Relax", "Calm body and mind, right now."],
+        links: [["#/strumento/respiro", "🫁", "Respirazione", "Breathing"], ["#/strumento/bodyscan", "🧘", "Scansione corporea", "Body scan"],
+          ["#/strumento/grounding", "🌍", "Grounding 5-4-3-2-1", "Grounding 5-4-3-2-1"], ["#/strumento/suoni", "🎧", "Suoni rilassanti", "Relaxing sounds"]] },
+      { emoji: "⚡", it: ["Attivarmi e concentrarmi", "Accendere il cervello e tenerlo sul pezzo."], en: ["Activate and focus", "Turn the brain on and keep it on track."],
+        links: [["#/strumento/pomodoro", "🍅", "Timer di focus", "Focus timer"], ["#/giochi", "🏋️", "Palestra della mente", "Mind gym"],
+          ["#/strumento/suoni", "🎧", "Rumore per il focus", "Focus noise"]] },
+      { emoji: "🗂️", it: ["Organizzarmi", "Mettere ordine nella giornata e nella testa."], en: ["Get organized", "Bring order to the day and to your head."],
+        links: [["#/strumento/attivita", "✅", "Le mie attività", "My tasks"], ["#/strumento/routine", "🧭", "Routine guidate", "Guided routines"],
+          ["#/strumento/abitudini", "🔁", "Abitudini", "Habits"], ["#/strumento/dump", "🧺", "Svuota la mente", "Brain dump"]] },
+      { emoji: "🏋️", it: ["Solo allenare la mente", "Nessuna neurodivergenza? La palestra vale per tutti i cervelli."], en: ["Just train the mind", "No neurodivergence? The gym works for every brain."],
+        links: [["#/giochi", "🎮", "Tutti gli 11 giochi", "All 11 games"], ["#/strumento/gratitudine", "✨", "Tre cose buone", "Three good things"]] },
+      { emoji: "🎓", it: ["Capire e imparare", "Psicoeducazione seria, un passo al giorno."], en: ["Understand and learn", "Serious psychoeducation, one step a day."],
+        links: [["#/percorsi", "🎓", "Percorsi di 7 giorni", "7-day paths"], ["#/risorse", "📚", "Risorse e guide", "Resources & guides"]] },
+      { emoji: "📋", it: ["Non so da dove iniziare", "Un questionario riconosciuto può orientarti (senza etichettarti)."], en: ["I don't know where to start", "A recognized questionnaire can point you somewhere (without labeling you)."],
+        links: [["#/test", "📋", "Test di screening", "Screening tests"], ["#/strumento/umore", "🌤️", "Parti da come stai", "Start from how you feel"]] },
+    ];
+    const cardHTML = c => `
+      <div class="tile">
+        <span class="tile-emoji" aria-hidden="true">${c.emoji}</span>
+        <h3>${en ? c.en[0] : c.it[0]}</h3>
+        <p>${en ? c.en[1] : c.it[1]}</p>
+        <div class="mini-links">
+          ${c.links.map(([href, e, it, enL]) => `<a href="${href}">${e} ${en ? enL : it}</a>`).join("")}
+        </div>
+      </div>`;
+
     main.innerHTML = `
       <div class="view">
         <div class="page-head">
-          <h1>🧭 Inizia da qui</h1>
-          <p>Nessun test obbligatorio, nessuna etichetta necessaria: scegli come vuoi entrare. Puoi cambiare strada quando vuoi.</p>
+          <h1>🧭 ${en ? "Start here" : "Inizia da qui"}</h1>
+          <p>${en
+            ? "No mandatory test, no label required: choose how you want to come in. You can change path anytime."
+            : "Nessun test obbligatorio, nessuna etichetta necessaria: scegli come vuoi entrare. Puoi cambiare strada quando vuoi."}</p>
         </div>
 
-        <h2 style="font-size:1.15rem; margin-bottom:.6rem">Di cosa hai bisogno adesso?</h2>
+        <h2 style="font-size:1.15rem; margin-bottom:.6rem">${en ? "What do you need right now?" : "Di cosa hai bisogno adesso?"}</h2>
         <div class="grid grid-3" style="margin-bottom:1.8rem">
-          <div class="tile">
-            <span class="tile-emoji" aria-hidden="true">🧘</span>
-            <h3>Rilassarmi</h3>
-            <p>Calmare corpo e mente, adesso.</p>
-            <div class="mini-links">
-              <a href="#/strumento/respiro">🫁 Respirazione</a>
-              <a href="#/strumento/bodyscan">🧘 Scansione corporea</a>
-              <a href="#/strumento/grounding">🌍 Grounding 5-4-3-2-1</a>
-              <a href="#/strumento/suoni">🎧 Suoni rilassanti</a>
-            </div>
-          </div>
-          <div class="tile">
-            <span class="tile-emoji" aria-hidden="true">⚡</span>
-            <h3>Attivarmi e concentrarmi</h3>
-            <p>Accendere il cervello e tenerlo sul pezzo.</p>
-            <div class="mini-links">
-              <a href="#/strumento/pomodoro">🍅 Timer di focus</a>
-              <a href="#/giochi">🏋️ Palestra della mente</a>
-              <a href="#/strumento/suoni">🎧 Rumore per il focus</a>
-            </div>
-          </div>
-          <div class="tile">
-            <span class="tile-emoji" aria-hidden="true">🗂️</span>
-            <h3>Organizzarmi</h3>
-            <p>Mettere ordine nella giornata e nella testa.</p>
-            <div class="mini-links">
-              <a href="#/strumento/attivita">✅ Le mie attività</a>
-              <a href="#/strumento/routine">🧭 Routine guidate</a>
-              <a href="#/strumento/abitudini">🔁 Abitudini</a>
-              <a href="#/strumento/dump">🧺 Svuota la mente</a>
-            </div>
-          </div>
-          <div class="tile">
-            <span class="tile-emoji" aria-hidden="true">🏋️</span>
-            <h3>Solo allenare la mente</h3>
-            <p>Nessuna neurodivergenza? La palestra vale per tutti i cervelli.</p>
-            <div class="mini-links">
-              <a href="#/giochi">🎮 Tutti gli 11 giochi</a>
-              <a href="#/strumento/gratitudine">✨ Tre cose buone</a>
-            </div>
-          </div>
-          <div class="tile">
-            <span class="tile-emoji" aria-hidden="true">🎓</span>
-            <h3>Capire e imparare</h3>
-            <p>Psicoeducazione seria, un passo al giorno.</p>
-            <div class="mini-links">
-              <a href="#/percorsi">🎓 Percorsi di 7 giorni</a>
-              <a href="#/risorse">📚 Risorse e guide</a>
-            </div>
-          </div>
-          <div class="tile">
-            <span class="tile-emoji" aria-hidden="true">📋</span>
-            <h3>Non so da dove iniziare</h3>
-            <p>Un questionario riconosciuto può orientarti (senza etichettarti).</p>
-            <div class="mini-links">
-              <a href="#/test">📋 Test di screening</a>
-              <a href="#/strumento/umore">🌤️ Parti da come stai</a>
-            </div>
-          </div>
+          ${CARDS.map(cardHTML).join("")}
         </div>
 
-        <h2 style="font-size:1.15rem; margin-bottom:.6rem">Oppure entra dalla tua neurodivergenza (o da quella di chi ami)</h2>
+        <h2 style="font-size:1.15rem; margin-bottom:.6rem">${en ? "Or enter from your neurodivergence (or a loved one's)" : "Oppure entra dalla tua neurodivergenza (o da quella di chi ami)"}</h2>
         <div class="grid grid-3" style="margin-bottom:1.8rem">
           ${Object.entries(ND_INFO).map(([k, n]) => `
             <div class="tile">
               <span class="tile-emoji" aria-hidden="true">${n.emoji}</span>
-              <h3>${n.nome}</h3>
+              <h3>${en ? ND_INFO_EN[k] : n.nome}</h3>
               <div class="mini-links">
-                <a href="#/giochi" data-nd-go="${k}">🎮 Giochi indicati</a>
-                <a href="#/strumenti" data-nd-go="${k}">🧰 Strumenti indicati</a>
-                <a href="#/risorse">📚 Capire meglio</a>
+                <a href="#/giochi" data-nd-go="${k}">🎮 ${en ? "Relevant games" : "Giochi indicati"}</a>
+                <a href="#/strumenti" data-nd-go="${k}">🧰 ${en ? "Relevant tools" : "Strumenti indicati"}</a>
+                <a href="#/risorse">📚 ${en ? "Understand more" : "Capire meglio"}</a>
               </div>
             </div>`).join("")}
           <div class="tile">
             <span class="tile-emoji" aria-hidden="true">👨‍👩‍👧</span>
-            <h3>Genitore o insegnante</h3>
+            <h3>${en ? "Parent or teacher" : "Genitore o insegnante"}</h3>
             <div class="mini-links">
-              <a href="#/risorse">👨‍👩‍👧 Guida per voi</a>
-              <a href="#/giochi">🧒 Giochi con livelli per età</a>
+              <a href="#/risorse">👨‍👩‍👧 ${en ? "Guide for you" : "Guida per voi"}</a>
+              <a href="#/giochi">🧒 ${en ? "Age-leveled games" : "Giochi con livelli per età"}</a>
+              <a href="#/classe">🏫 ${en ? "Class Mode (shared device)" : "Modalità Classe (dispositivo condiviso)"}</a>
             </div>
           </div>
         </div>
@@ -953,29 +1070,48 @@ const App = (() => {
   }
 
   /* ---------- test di screening riconosciuti (mai diagnosi) ---------- */
+  /* fonde i campi testuali inglesi (se presenti) con la struttura di scoring originale */
+  function testLocalizzato(t) {
+    const en = lang() === "en" && TESTS_EN[t.id];
+    if (!en) return t;
+    return {
+      ...t,
+      nome: en.nome, strumento: en.strumento, per: en.per, intro: en.intro,
+      opzioni: en.opzioni,
+      domande: t.domande.map((d, i) => ({ ...d, t: en.domande[i] })),
+    };
+  }
+
   function viewTests() {
+    const en = lang() === "en";
+    const disclaimer = en ? TEST_DISCLAIMER_EN : TEST_DISCLAIMER;
     main.innerHTML = `
       <div class="view" style="max-width:760px; margin:0 auto">
         <div class="page-head">
-          <h1>📋 Test di screening</h1>
-          <p>Questionari <strong>validati e riconosciuti</strong> dalla letteratura scientifica, in adattamento italiano. Sono bussole, non etichette.</p>
+          <h1>📋 ${en ? "Screening tests" : "Test di screening"}</h1>
+          <p>${en
+            ? "Questionnaires <strong>validated and recognized</strong> in the scientific literature. They are compasses, not labels."
+            : "Questionari <strong>validati e riconosciuti</strong> dalla letteratura scientifica, in adattamento italiano. Sono bussole, non etichette."}</p>
         </div>
         <div class="honesty-box" style="border-color:var(--warn); background:var(--warn-soft)">
-          <h3 style="color:var(--warn)">⚠️ Prima di iniziare</h3>
-          <p>${TEST_DISCLAIMER} Questi questionari sono pensati per <strong>adulti (18+)</strong>: per bambini e ragazzi il riferimento giusto è il pediatra o la neuropsichiatria infantile.</p>
+          <h3 style="color:var(--warn)">⚠️ ${en ? "Before you start" : "Prima di iniziare"}</h3>
+          <p>${disclaimer} ${en
+            ? "These questionnaires are meant for <strong>adults (18+)</strong>: for children and teens, the right point of reference is a pediatrician or child/adolescent psychiatry service."
+            : "Questi questionari sono pensati per <strong>adulti (18+)</strong>: per bambini e ragazzi il riferimento giusto è il pediatra o la neuropsichiatria infantile."}</p>
         </div>
         <div class="btn-row" style="margin-bottom:1.4rem">
-          <a class="btn btn-soft" href="#/inizia">🧭 Preferisco scegliere senza test →</a>
+          <a class="btn btn-soft" href="#/inizia">🧭 ${en ? "I'd rather choose without a test →" : "Preferisco scegliere senza test →"}</a>
         </div>
         <div class="grid" style="grid-template-columns:1fr">
           ${TESTS.map(t => {
+            const tt = testLocalizzato(t);
             const esito = DB.state.testEsiti[t.id];
             return `
             <a class="tile" href="#/test/${t.id}">
               <span class="tile-emoji" aria-hidden="true">${t.emoji}</span>
-              <h3>${t.nome}</h3>
-              <p><strong>${t.strumento}</strong> · ${t.domande.length} domande · ${t.per}</p>
-              ${esito ? `<span class="tile-tag">Ultimo risultato: ${esito.score} ${t.unita} (${esito.when})</span>` : `<span class="tile-tag">Mai fatto</span>`}
+              <h3>${tt.nome}</h3>
+              <p><strong>${tt.strumento}</strong> · ${t.domande.length} ${en ? "questions" : "domande"} · ${tt.per}</p>
+              ${esito ? `<span class="tile-tag">${en ? "Last result" : "Ultimo risultato"}: ${esito.score} ${t.unita} (${esito.when})</span>` : `<span class="tile-tag">${en ? "Never taken" : "Mai fatto"}</span>`}
             </a>`;
           }).join("")}
         </div>
@@ -999,25 +1135,28 @@ const App = (() => {
   function viewTest(id) {
     const t = TESTS.find(x => x.id === id);
     if (!t) return navigate("/test");
+    const en = lang() === "en";
+    const tt = testLocalizzato(t);
     const fonte = FONTI.find(f => f.id === t.fonte);
+    const disclaimer = en ? TEST_DISCLAIMER_EN : TEST_DISCLAIMER;
 
     main.innerHTML = `
       <div class="view" style="max-width:720px; margin:0 auto">
-        <a class="back-link" href="#/test">← Tutti i test</a>
+        <a class="back-link" href="#/test">${en ? "← All tests" : "← Tutti i test"}</a>
         <div class="page-head">
-          <h1>${t.emoji} ${t.nome}</h1>
-          <p><strong>${t.strumento}</strong></p>
+          <h1>${t.emoji} ${tt.nome}</h1>
+          <p><strong>${tt.strumento}</strong></p>
         </div>
         <div class="honesty-box" style="border-color:var(--warn); background:var(--warn-soft); padding:.9rem 1.1rem">
-          <p style="font-size:.88rem">⚠️ ${TEST_DISCLAIMER}</p>
+          <p style="font-size:.88rem">⚠️ ${disclaimer}</p>
         </div>
-        <div class="card" style="margin-bottom:1.2rem"><p style="color:var(--text-soft)">${t.intro}</p></div>
+        <div class="card" style="margin-bottom:1.2rem"><p style="color:var(--text-soft)">${tt.intro}</p></div>
         <form data-test-form>
-          ${t.domande.map((d, i) => `
+          ${tt.domande.map((d, i) => `
             <fieldset class="test-q card">
               <legend>${i + 1}. ${d.t}</legend>
               <div class="test-opts">
-                ${t.opzioni.map((o, j) => `
+                ${tt.opzioni.map((o, j) => `
                   <label class="test-opt">
                     <input type="radio" name="q${i}" value="${j}">
                     <span>${o}</span>
@@ -1025,11 +1164,11 @@ const App = (() => {
               </div>
             </fieldset>`).join("")}
           <div class="btn-row" style="justify-content:center; margin:1.2rem 0">
-            <button class="btn btn-big" type="submit">Calcola il risultato</button>
+            <button class="btn btn-big" type="submit">${en ? "Calculate result" : "Calcola il risultato"}</button>
           </div>
         </form>
         <div data-risultato></div>
-        <p style="font-size:.8rem; color:var(--text-soft); margin-top:1rem">📚 Fonte: ${fonte ? fonte.testo : ""}</p>
+        <p style="font-size:.8rem; color:var(--text-soft); margin-top:1rem">📚 ${en ? "Source" : "Fonte"}: ${fonte ? fonte.testo : ""}</p>
       </div>`;
 
     main.querySelector("[data-test-form]").addEventListener("submit", e => {
@@ -1039,7 +1178,7 @@ const App = (() => {
         return sel ? Number(sel.value) : null;
       });
       if (risposte.some(r => r === null)) {
-        toast("Manca qualche risposta: controlla le domande senza pallino 😊");
+        toast(en ? "Some answers are missing: check the questions with no dot selected 😊" : "Manca qualche risposta: controlla le domande senza pallino 😊");
         return;
       }
       const { score, positivo } = calcolaTest(t, risposte);
@@ -1048,22 +1187,28 @@ const App = (() => {
 
       let banda = "";
       if (t.tipo === "gad") {
-        banda = score <= 4 ? "ansia minima" : score <= 9 ? "ansia lieve" : score <= 14 ? "ansia moderata" : "ansia elevata";
+        banda = en
+          ? (score <= 4 ? "minimal anxiety" : score <= 9 ? "mild anxiety" : score <= 14 ? "moderate anxiety" : "severe anxiety")
+          : (score <= 4 ? "ansia minima" : score <= 9 ? "ansia lieve" : score <= 14 ? "ansia moderata" : "ansia elevata");
       }
 
       const box = main.querySelector("[data-risultato]");
       box.innerHTML = `
         <div class="card" style="border:2px solid ${positivo ? "var(--warn)" : "var(--accent)"}">
-          <h2 style="margin-bottom:.5rem">Il tuo risultato: ${score} ${t.unita}${banda ? ` · ${banda}` : ""}</h2>
+          <h2 style="margin-bottom:.5rem">${en ? "Your result" : "Il tuo risultato"}: ${score} ${t.unita}${banda ? ` · ${banda}` : ""}</h2>
           <p style="margin-bottom:.8rem">${positivo
-            ? `In letteratura, un punteggio come il tuo (≥ ${t.sogliaPositiva}) è considerato un <strong>segnale che vale la pena approfondire</strong> con una persona professionista. Non è una diagnosi: è un buon motivo per una chiacchierata con chi può valutarti davvero.`
-            : `Il tuo punteggio è <strong>sotto la soglia di screening</strong> usata in letteratura (${t.sogliaPositiva}). Ricorda però: se le difficoltà nella vita reale ci sono, meriti supporto a prescindere da qualsiasi numero.`}
+            ? (en
+              ? `In the literature, a score like yours (≥ ${t.sogliaPositiva}) is considered a <strong>signal worth exploring further</strong> with a qualified professional. It's not a diagnosis: it's a good reason for a conversation with someone who can properly assess you.`
+              : `In letteratura, un punteggio come il tuo (≥ ${t.sogliaPositiva}) è considerato un <strong>segnale che vale la pena approfondire</strong> con una persona professionista. Non è una diagnosi: è un buon motivo per una chiacchierata con chi può valutarti davvero.`)
+            : (en
+              ? `Your score is <strong>below the screening threshold</strong> used in the literature (${t.sogliaPositiva}). Remember though: if real-life difficulties are there, you deserve support regardless of any number.`
+              : `Il tuo punteggio è <strong>sotto la soglia di screening</strong> usata in letteratura (${t.sogliaPositiva}). Ricorda però: se le difficoltà nella vita reale ci sono, meriti supporto a prescindere da qualsiasi numero.`)}
           </p>
-          <p style="font-size:.85rem; color:var(--text-soft); margin-bottom:1rem">⚠️ ${TEST_DISCLAIMER}</p>
+          <p style="font-size:.85rem; color:var(--text-soft); margin-bottom:1rem">⚠️ ${disclaimer}</p>
           <div class="btn-row">
-            <a class="btn" href="#/risorse">🤝 Dove trovare aiuto in Italia</a>
-            <a class="btn btn-soft" href="#/giochi" data-nd-result>🎮 Esercizi indicati</a>
-            <a class="btn btn-ghost" href="#/inizia">🧭 Esplora l'app</a>
+            <a class="btn" href="#/risorse">🤝 ${en ? "Where to find help" : "Dove trovare aiuto in Italia"}</a>
+            <a class="btn btn-soft" href="#/giochi" data-nd-result>🎮 ${en ? "Relevant exercises" : "Esercizi indicati"}</a>
+            <a class="btn btn-ghost" href="#/inizia">🧭 ${en ? "Explore the app" : "Esplora l'app"}</a>
           </div>
         </div>`;
       const ndLink = box.querySelector("[data-nd-result]");
@@ -1076,14 +1221,431 @@ const App = (() => {
     });
   }
 
+  /* ---------- dichiarazione di accessibilità ---------- */
+  function viewAccessibilita() {
+    const en = lang() === "en";
+    const data = new Date().toLocaleDateString(en ? "en-GB" : "it-IT", { day: "numeric", month: "long", year: "numeric" });
+    main.innerHTML = en ? `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>♿ Accessibility statement</h1>
+          <p>Last checked: ${data}</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Commitment and standard</h2>
+          <p>NeuroSpazio aims to meet the <strong>Web Content Accessibility Guidelines (WCAG) 2.2, level AA</strong>, the international reference standard for digital accessibility. This commitment isn't decorative: much of who uses this site has concrete reasons — sensory, motor, cognitive — to need an interface that's genuinely accessible, not just aesthetically inclusive.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">What we've verified</h2>
+          <ul style="padding-left:1.3rem">
+            <li style="margin-bottom:.4rem"><strong>Color contrast:</strong> text and components automatically checked (axe-core) across all main pages, in light and dark theme, for the minimum 4.5:1 ratio required by WCAG criterion 1.4.3.</li>
+            <li style="margin-bottom:.4rem"><strong>Keyboard navigation:</strong> every function is reachable without a mouse; the SOS Card (the most critical component, meant for crisis moments) has focus trap, Escape-to-close, and focus restoration, per the ARIA Authoring Practices.</li>
+            <li style="margin-bottom:.4rem"><strong>Screen readers:</strong> semantic landmarks (header/nav/main/footer), ARIA labels on controls, aria-live for notifications and game scores, alt text on decorative emoji.</li>
+            <li style="margin-bottom:.4rem"><strong>Motion:</strong> a "Reduce animations" switch in Settings, and automatic respect for the OS's <code>prefers-reduced-motion</code>.</li>
+            <li style="margin-bottom:.4rem"><strong>Text:</strong> resizable up to 130% from the interface, a dedicated dyslexia mode (font and spacing).</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--warn)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Known limitations</h2>
+          <p style="margin-bottom:.6rem">Honesty first: automated auditing covers part of the WCAG criteria, not all of them. We don't yet have full testing with real screen reader users (NVDA, JAWS, VoiceOver) in everyday conditions, nor a review by certified accessibility experts.</p>
+          <p>Some games (e.g. Color Rebel/Stroop) necessarily use color as part of the cognitive task itself: there, color is the content, not just decoration, so it isn't always possible to pair it with a non-color alternative without changing the exercise.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Report a problem</h2>
+          <p>If you hit a barrier — insufficient contrast, a control unreachable by keyboard, a missing label for your screen reader — that's valuable information. We don't have a data-collection form (consistent with our <a href="#/privacy">zero-tracking policy</a>): the right channel to report it depends on where you found this site.</p>
+        </div>
+      </div>` : `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>♿ Dichiarazione di accessibilità</h1>
+          <p>Ultimo controllo: ${data}</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Impegno e standard</h2>
+          <p>NeuroSpazio punta a rispettare le <strong>Web Content Accessibility Guidelines (WCAG) 2.2, livello AA</strong>, lo standard internazionale di riferimento per l'accessibilità digitale. Questo impegno non è decorativo: gran parte di chi usa questo sito ha ragioni concrete — sensoriali, motorie, cognitive — per aver bisogno di un'interfaccia davvero accessibile, non solo esteticamente inclusiva.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Cosa abbiamo verificato</h2>
+          <ul style="padding-left:1.3rem">
+            <li style="margin-bottom:.4rem"><strong>Contrasto colore:</strong> testo e componenti verificati automaticamente (axe-core) su tutte le pagine principali, in tema chiaro e scuro, per il rapporto minimo 4.5:1 richiesto dal criterio WCAG 1.4.3.</li>
+            <li style="margin-bottom:.4rem"><strong>Navigazione da tastiera:</strong> ogni funzione è raggiungibile senza mouse; la Carta SOS (il componente più critico, pensato per momenti di crisi) ha focus trap, chiusura con Esc e ripristino del focus, secondo le ARIA Authoring Practices.</li>
+            <li style="margin-bottom:.4rem"><strong>Lettori di schermo:</strong> landmark semantici (header/nav/main/footer), etichette ARIA sui controlli, aria-live per notifiche e punteggi di gioco, testo alternativo sulle emoji decorative.</li>
+            <li style="margin-bottom:.4rem"><strong>Movimento:</strong> interruttore "Riduci le animazioni" nelle Opzioni, e rispetto automatico di <code>prefers-reduced-motion</code> del sistema operativo.</li>
+            <li style="margin-bottom:.4rem"><strong>Testo:</strong> ridimensionabile fino al 130% dall'interfaccia, modalità dedicata per la dislessia (font e spaziatura).</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--warn)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Limiti conosciuti</h2>
+          <p style="margin-bottom:.6rem">Onestà prima di tutto: l'audit automatico copre una parte dei criteri WCAG, non tutti. Non abbiamo ancora un test completo con persone reali che usano lettori di schermo (NVDA, JAWS, VoiceOver) in condizioni quotidiane, né una revisione da parte di esperti certificati di accessibilità.</p>
+          <p>Alcuni giochi (es. Colore ribelle/Stroop) usano necessariamente il colore come parte del compito cognitivo stesso: lì il colore è il contenuto, non solo una decorazione, e non è quindi sempre possibile affiancarlo a un'alternativa non cromatica senza snaturare l'esercizio.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Segnala un problema</h2>
+          <p>Se incontri una barriera — un contrasto insufficiente, un controllo non raggiungibile da tastiera, un'etichetta mancante per il tuo lettore di schermo — è un'informazione preziosa. Non abbiamo un modulo di raccolta dati (coerentemente con la nostra <a href="#/privacy">politica zero-tracking</a>): il canale di segnalazione dipende da dove hai trovato questo sito.</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- trasparenza privacy ---------- */
+  function viewPrivacy() {
+    const en = lang() === "en";
+    main.innerHTML = en ? `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>🔒 Privacy, in plain words</h1>
+          <p>Not a legal document written to protect us: an honest explanation of what happens to your data.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--accent)">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">🏠 Everything stays on your device</h2>
+          <p>NeuroSpazio has no account, no server, no database. Tasks, mood, game scores, test results, everything you write: it's saved only in the local memory of the browser you're using right now (called <code>localStorage</code>). If you clear the site's data from your browser, or open the app on another device, that data is gone — no server keeps it for you.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--primary)">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">🚫 What we DON'T do</h2>
+          <ul style="padding-left:1.3rem">
+            <li style="margin-bottom:.4rem">No account, no password, no email required</li>
+            <li style="margin-bottom:.4rem">No tracking cookies, no advertising pixels</li>
+            <li style="margin-bottom:.4rem">No analytics (Google Analytics, Meta Pixel or similar)</li>
+            <li style="margin-bottom:.4rem">No data sent to external servers: the app even works offline (thanks to the service worker) precisely because it doesn't need to "phone home"</li>
+            <li style="margin-bottom:.4rem">No selling or sharing data with third parties — simply because we never hold it ourselves</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">📋 Exactly what's stored locally</h2>
+          <p style="color:var(--text-soft); margin-bottom:.6rem">All under one entry in your browser: tasks and lists, daily mood, habits and streaks, routines you create, screening test results, game scores, badges, appearance and accessibility settings, "Brain Dump" and "Three Good Things" notes.</p>
+          <p>You can view and delete everything anytime from <a href="#/impostazioni">Settings → Your data</a>: export a copy, import it on another device, or delete everything with one tap.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">⚖️ A note on GDPR (not legal advice)</h2>
+          <p>The EU General Data Protection Regulation (GDPR, Art. 5.1.c) asks companies to collect only the minimum data necessary ("data minimization"). NeuroSpazio follows this principle as radically as possible: by collecting zero data that leaves your device. This page describes how the app works; it does not replace professional legal or privacy advice.</p>
+        </div>
+      </div>` : `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>🔒 Privacy, in parole semplici</h1>
+          <p>Non un documento legale scritto per proteggerci: una spiegazione onesta di cosa succede ai tuoi dati.</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--accent)">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">🏠 Tutto resta nel tuo dispositivo</h2>
+          <p>NeuroSpazio non ha un account, non ha un server, non ha un database. Attività, umore, punteggi dei giochi, risultati dei test, tutto quello che scrivi: viene salvato solo nella memoria locale del browser che stai usando ora (si chiama <code>localStorage</code>). Se cancelli i dati del sito dal browser, o apri l'app da un altro dispositivo, quei dati non ci sono più — nessun server li conserva al posto tuo.</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--primary)">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">🚫 Cosa NON facciamo</h2>
+          <ul style="padding-left:1.3rem">
+            <li style="margin-bottom:.4rem">Nessun account, nessuna password, nessuna email richiesta</li>
+            <li style="margin-bottom:.4rem">Nessun cookie di tracciamento, nessun pixel pubblicitario</li>
+            <li style="margin-bottom:.4rem">Nessun analytics (Google Analytics, Meta Pixel o simili)</li>
+            <li style="margin-bottom:.4rem">Nessun invio di dati a server esterni: l'app funziona anche offline (grazie al service worker) proprio perché non ha bisogno di "telefonare a casa"</li>
+            <li style="margin-bottom:.4rem">Nessuna vendita o condivisione di dati con terze parti — semplicemente perché non li abbiamo mai in mano noi</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">📋 Esattamente cosa viene salvato localmente</h2>
+          <p style="color:var(--text-soft); margin-bottom:.6rem">Tutto sotto un'unica voce nel tuo browser: attività e liste, umore giornaliero, abitudini e serie, routine create, esiti dei test di screening, punteggi dei giochi, badge, impostazioni di aspetto e accessibilità, note di "Svuota la mente" e "Tre cose buone".</p>
+          <p>Puoi vedere e cancellare tutto in ogni momento da <a href="#/impostazioni">Opzioni → I tuoi dati</a>: esporta una copia, importala su un altro dispositivo, o cancella tutto con un tocco.</p>
+        </div>
+
+        <div class="card">
+          <h2 style="font-size:1.15rem; margin-bottom:.5rem">⚖️ Una nota sul GDPR (non è consulenza legale)</h2>
+          <p>Il Regolamento europeo sulla protezione dei dati (GDPR, Art. 5.1.c) chiede alle aziende di raccogliere solo i dati minimi necessari ("minimizzazione dei dati"). NeuroSpazio segue questo principio nel modo più radicale possibile: raccogliendo zero dati che lascino il tuo dispositivo. Questa pagina descrive come funziona l'app, non sostituisce una consulenza legale o privacy professionale.</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- per ricercatori: onestà, nessuna validazione mai dichiarata ---------- */
+  function viewRicerca() {
+    const en = lang() === "en";
+    const repoUrl = "https://github.com/itsgrc/neuro";
+    main.innerHTML = en ? `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>🔬 For researchers</h1>
+          <p>What NeuroSpazio actually is, scientifically speaking — no more, no less.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--accent)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">What we can honestly claim</h2>
+          <p>Every game and tool is built around a mechanism documented in peer-reviewed literature (Stroop task, go/no-go, n-back, ASRS, AQ-10, GAD-7, implementation intentions, mindfulness-based interventions, and more — full list in our <a href="#/risorse">bibliography</a>, 53 references). The underlying <em>techniques</em> have evidence behind them.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--warn)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">What we CANNOT honestly claim</h2>
+          <p style="margin-bottom:.6rem"><strong>NeuroSpazio itself — this specific web implementation — has not undergone independent clinical or usability validation.</strong> A validated technique (e.g., the Stroop paradigm) doesn't automatically make our particular digital adaptation of it validated: colors, timing, UI, and game framing can all affect results, and we haven't measured that.</p>
+          <p style="margin-bottom:.6rem">The three screening questionnaires (ASRS, AQ-10, GAD-7) are validated instruments in their original clinical form. Our web adaptation follows their structure and scoring faithfully, but digital self-administered versions of paper instruments generally require their own psychometric validation (equivalence testing) before being considered clinically equivalent — we have not conducted or commissioned that study.</p>
+          <p>We do not track usage, retention, or outcomes centrally (by design — see our <a href="#/privacy">privacy page</a>), so we currently have no aggregate data of our own to analyze or share.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">An open invitation</h2>
+          <p style="margin-bottom:.6rem">If you're a researcher in psychology, HCI, digital health, or education interested in studying digital tools for neurodivergent support — usability, engagement, or the validity of digital screening adaptations — we'd genuinely like to talk. This would mean designing a proper study with real consent, not analyzing data we don't have.</p>
+          <p>The codebase is public: <a href="${repoUrl}" target="_blank" rel="noopener">${repoUrl}</a>. Open an issue there to get in touch — that's our only real, verifiable contact channel today.</p>
+        </div>
+      </div>` : `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>🔬 Per ricercatori</h1>
+          <p>Cos'è davvero NeuroSpazio, dal punto di vista scientifico — né più né meno.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--accent)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Cosa possiamo affermare onestamente</h2>
+          <p>Ogni gioco e strumento è costruito attorno a un meccanismo documentato nella letteratura peer-reviewed (compito di Stroop, go/no-go, n-back, ASRS, AQ-10, GAD-7, implementation intentions, interventi mindfulness-based e altro — elenco completo nella nostra <a href="#/risorse">bibliografia</a>, 53 riferimenti). Le <em>tecniche</em> di base hanno prove a supporto.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--warn)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Cosa NON possiamo affermare onestamente</h2>
+          <p style="margin-bottom:.6rem"><strong>NeuroSpazio in sé — questa specifica implementazione web — non ha ricevuto una validazione clinica o di usabilità indipendente.</strong> Una tecnica validata (es. il paradigma di Stroop) non rende automaticamente validato il nostro particolare adattamento digitale: colori, tempistiche, interfaccia e cornice ludica possono tutti influenzare i risultati, e non lo abbiamo misurato.</p>
+          <p style="margin-bottom:.6rem">I tre questionari di screening (ASRS, AQ-10, GAD-7) sono strumenti validati nella loro forma clinica originale. Il nostro adattamento web ne segue fedelmente struttura e punteggio, ma le versioni digitali auto-somministrate di strumenti cartacei richiedono generalmente una propria validazione psicometrica (test di equivalenza) prima di essere considerate clinicamente equivalenti — non abbiamo condotto né commissionato quello studio.</p>
+          <p>Non tracciamo utilizzo, retention o esiti in modo centralizzato (per scelta — vedi la nostra <a href="#/privacy">pagina privacy</a>), quindi al momento non abbiamo dati aggregati nostri da analizzare o condividere.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Un invito aperto</h2>
+          <p style="margin-bottom:.6rem">Se sei un ricercatore o una ricercatrice in psicologia, HCI, salute digitale o educazione, interessato/a a studiare strumenti digitali per il supporto neurodivergente — usabilità, coinvolgimento, o la validità degli adattamenti digitali di screening — ci farebbe piacere parlarne. Significherebbe progettare uno studio vero con consenso reale, non analizzare dati che non abbiamo.</p>
+          <p>Il codice è pubblico: <a href="${repoUrl}" target="_blank" rel="noopener">${repoUrl}</a>. Apri una issue lì per metterti in contatto — è il nostro unico canale di contatto reale e verificabile oggi.</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- media kit: fatti reali, zero testimonianze finte ---------- */
+  function viewMediaKit() {
+    const en = lang() === "en";
+    const repoUrl = "https://github.com/itsgrc/neuro";
+    const FACTS_IT = [
+      ["🎮", "11 giochi cognitivi", "Su 6 domini: memoria, attenzione, inibizione, flessibilità, tempo, senso del numero"],
+      ["🧰", "13 strumenti", "Focus, organizzazione, calma — dal Pomodoro alla Carta SOS"],
+      ["🎓", "3 percorsi guidati", "7 giorni, un passo al giorno, con fonte citata per ogni giorno"],
+      ["📋", "3 test di screening", "ASRS (OMS), AQ-10 (Cambridge), GAD-7 — mai diagnostici"],
+      ["📚", "53 fonti scientifiche", "Bibliografia consultabile integralmente nell'app"],
+      ["🔒", "Zero tracking", "Nessun account, nessun server, nessun analytics"],
+      ["💸", "Gratis, senza pubblicità", "E lo resterà: nessun costo di infrastruttura da ripagare"],
+      ["♿", "WCAG 2.2 AA", "Verificato con axe-core in tema chiaro e scuro"],
+      ["📖", "Open source", "Codice pubblico, ispezionabile da chiunque"],
+    ];
+    const FACTS_EN = [
+      ["🎮", "11 cognitive games", "Across 6 domains: memory, attention, inhibition, flexibility, time, number sense"],
+      ["🧰", "13 tools", "Focus, organization, calm — from Pomodoro to the SOS Card"],
+      ["🎓", "3 guided paths", "7 days, one step a day, with a cited source for each day"],
+      ["📋", "3 screening tests", "ASRS (WHO), AQ-10 (Cambridge), GAD-7 — never diagnostic"],
+      ["📚", "53 scientific sources", "Full bibliography browsable in the app"],
+      ["🔒", "Zero tracking", "No account, no server, no analytics"],
+      ["💸", "Free, no ads", "And it'll stay that way: no infrastructure cost to recoup"],
+      ["♿", "WCAG 2.2 AA", "Verified with axe-core in light and dark theme"],
+      ["📖", "Open source", "Public code, inspectable by anyone"],
+    ];
+    const facts = en ? FACTS_EN : FACTS_IT;
+
+    main.innerHTML = `
+      <div class="view" style="max-width:760px; margin:0 auto">
+        <div class="page-head">
+          <h1>📰 ${en ? "Media kit" : "Media kit"}</h1>
+          <p>${en
+            ? "Real facts about NeuroSpazio, for press, educators, or anyone who wants to talk about it accurately. No follower counts, no testimonials, no fabricated numbers — this app has no analytics, so we couldn't fake usage stats even if we wanted to."
+            : "Fatti reali su NeuroSpazio, per stampa, educatori o chiunque voglia parlarne con precisione. Nessun numero di follower, nessuna testimonianza, nessuna statistica inventata — quest'app non ha analytics, quindi non potremmo fabbricare dati d'uso nemmeno volendo."}</p>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:1.4rem">
+          ${facts.map(([e, t, d]) => `
+            <div class="card" style="text-align:center">
+              <div style="font-size:2rem; margin-bottom:.3rem">${e}</div>
+              <div style="font-weight:800; margin-bottom:.3rem">${t}</div>
+              <div style="color:var(--text-soft); font-size:.85rem">${d}</div>
+            </div>`).join("")}
+        </div>
+
+        <div class="card" style="margin-bottom:1.2rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.6rem">${en ? "One-line description" : "Descrizione in una riga"}</h2>
+          <p style="color:var(--text-soft); font-style:italic; margin-bottom:.8rem">${en
+            ? "“NeuroSpazio is a free, science-backed mind gym — games, tools, and screening tests for ADHD, autism, learning disabilities, and anxiety, built with zero tracking and open source code.”"
+            : "“NeuroSpazio è una palestra della mente gratuita e con basi scientifiche — giochi, strumenti e test di screening per ADHD, autismo, DSA e ansia, costruita a zero tracciamento e a codice aperto.”"}</p>
+          <h2 style="font-size:1.1rem; margin-bottom:.6rem">${en ? "Brand assets" : "Risorse grafiche"}</h2>
+          <div class="btn-row">
+            <a class="btn btn-soft" href="icons/icon-512.png" download>⬇️ ${en ? "Icon (512×512)" : "Icona (512×512)"}</a>
+            <a class="btn btn-soft" href="icons/og-image.png" download>⬇️ ${en ? "Social preview image" : "Immagine social"}</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.6rem">${en ? "Want to collaborate?" : "Vuoi collaborare?"}</h2>
+          <p style="margin-bottom:.6rem">${en
+            ? "We're open to honest collaboration with neurodivergent creators, educators, and associations who want to talk about NeuroSpazio to their own audience — on their own terms. We're not offering paid placements or fabricated endorsements, and we won't ask you to say anything you don't believe."
+            : "Siamo aperti a collaborazioni oneste con creator neurodivergenti, educatori e associazioni che vogliano parlare di NeuroSpazio al proprio pubblico — alle loro condizioni. Non offriamo inserzioni a pagamento né endorsement fabbricati, e non ti chiederemmo mai di dire qualcosa in cui non credi."}</p>
+          <p>${en ? "Get in touch via" : "Mettiti in contatto via"} <a href="${repoUrl}" target="_blank" rel="noopener">GitHub</a> — ${en ? "our only real contact channel today" : "il nostro unico canale di contatto reale oggi"}.</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- manifesto: monetizzazione etica, niente ads, niente pagamenti finti ---------- */
+  function viewSostieni() {
+    const en = lang() === "en";
+    const repoUrl = "https://github.com/itsgrc/neuro";
+    main.innerHTML = en ? `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>💜 Support NeuroSpazio</h1>
+          <p>Why there are no ads here, and probably never will be.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--primary)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Why no ads</h2>
+          <p style="margin-bottom:.6rem">The attention economy — infinite scroll, autoplay, targeted engagement — is built to hijack exactly the reward circuitry that's already more sensitive and harder to self-regulate in ADHD (Volkow et al., 2009). Putting ads, engagement-maximizing notifications, or manipulative design in an app built <em>for</em> this audience would be a direct contradiction of its purpose.</p>
+          <p>So: no ads, no attention-mining "streaks that punish," no dark patterns. The streaks and badges here exist because reward and structure genuinely help ADHD motivation (same source) — not to keep you scrolling past your own better judgment.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">How this stays free</h2>
+          <p>Right now, NeuroSpazio runs on zero infrastructure cost by design — no server, no database, no account system, hosted as a static site. That's not just a privacy choice, it's what makes "free, forever, no ads" actually sustainable rather than a promise waiting to be broken.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">How you can help (for real, today)</h2>
+          <ul style="padding-left:1.3rem">
+            <li style="margin-bottom:.5rem">⭐ Star or contribute on <a href="${repoUrl}" target="_blank" rel="noopener">GitHub</a> — the code is open</li>
+            <li style="margin-bottom:.5rem">🗣️ Tell someone who might need it — word of mouth is our only marketing channel</li>
+            <li style="margin-bottom:.5rem">🐛 Report bugs or accessibility barriers via a GitHub issue</li>
+          </ul>
+          <p style="color:var(--text-soft); font-size:.85rem; margin-top:.8rem">A financial support option (donations) isn't set up yet — we won't put up a button that leads nowhere. If that changes, it'll appear here, clearly labeled.</p>
+        </div>
+      </div>` : `
+      <div class="view" style="max-width:720px; margin:0 auto">
+        <div class="page-head">
+          <h1>💜 Sostieni NeuroSpazio</h1>
+          <p>Perché qui non c'è pubblicità, e probabilmente non ci sarà mai.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem; border-left:4px solid var(--primary)">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Perché niente pubblicità</h2>
+          <p style="margin-bottom:.6rem">L'economia dell'attenzione — scroll infinito, autoplay, coinvolgimento mirato — è costruita per dirottare esattamente quei circuiti della ricompensa che nell'ADHD sono già più sensibili e più difficili da autoregolare (Volkow et al., 2009). Mettere pubblicità, notifiche che massimizzano il coinvolgimento o design manipolativo in un'app pensata <em>per</em> questo pubblico sarebbe una contraddizione diretta del suo scopo.</p>
+          <p>Quindi: niente pubblicità, niente serie che "puniscono" per catturare attenzione, niente pattern oscuri. Le serie e i badge qui esistono perché ricompensa e struttura aiutano davvero la motivazione nell'ADHD (stessa fonte) — non per tenerti a scrollare oltre il tuo stesso buon senso.</p>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Come resta gratis</h2>
+          <p>Oggi NeuroSpazio ha costi di infrastruttura pari a zero per come è progettato — nessun server, nessun database, nessun sistema di account, ospitato come sito statico. Non è solo una scelta di privacy: è ciò che rende "gratis, per sempre, senza pubblicità" davvero sostenibile, e non una promessa in attesa di essere infranta.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">Come puoi aiutare (davvero, oggi)</h2>
+          <ul style="padding-left:1.3rem">
+            <li style="margin-bottom:.5rem">⭐ Metti una stella o contribuisci su <a href="${repoUrl}" target="_blank" rel="noopener">GitHub</a> — il codice è aperto</li>
+            <li style="margin-bottom:.5rem">🗣️ Parlane a chi potrebbe averne bisogno — il passaparola è il nostro unico canale di marketing</li>
+            <li style="margin-bottom:.5rem">🐛 Segnala bug o barriere di accessibilità con una issue su GitHub</li>
+          </ul>
+          <p style="color:var(--text-soft); font-size:.85rem; margin-top:.8rem">Un'opzione di sostegno economico (donazioni) non è ancora attiva — non mettiamo un bottone che non porta da nessuna parte. Se cambierà, comparirà qui, etichettato con chiarezza.</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- modalità classe: profili multipli locali su un solo dispositivo ---------- */
+  const EMOJI_PROFILO = ["🦊", "🐼", "🦁", "🐸", "🐙", "🦋", "🐢", "🦉", "🐝", "🌟", "🚀", "🌈"];
+
+  function viewClasse() {
+    const en = lang() === "en";
+    const attivo = DB.currentProfileId();
+    const profili = [{ id: "default", name: en ? "Me" : "Io", emoji: "🙂" }, ...DB.listProfiles()];
+
+    main.innerHTML = `
+      <div class="view" style="max-width:760px; margin:0 auto">
+        <div class="page-head">
+          <h1>🏫 ${en ? "Class Mode" : "Modalità Classe"}</h1>
+          <p>${en
+            ? "For a shared classroom device: one local profile per student, each with its own separate progress. Everything stays on this device — nothing is synced or sent anywhere."
+            : "Pensata per un computer o tablet condiviso in classe: un profilo locale per ogni studente, ciascuno con i propri progressi separati. Tutto resta su questo dispositivo — niente viene sincronizzato o inviato altrove."}</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1.2rem; border-left:4px solid var(--warn)">
+          <p style="font-size:.9rem">⚠️ ${en
+            ? "Important: switching profile reloads the active data set on THIS browser. If students use different devices, this mode isn't needed — each device already keeps its own separate data automatically."
+            : "Importante: cambiare profilo ricarica il set di dati attivo su QUESTO browser. Se gli studenti usano dispositivi diversi, questa modalità non serve — ogni dispositivo tiene già i propri dati separati automaticamente."}</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1.2rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.8rem">👥 ${en ? "Profiles on this device" : "Profili su questo dispositivo"}</h2>
+          <div class="profile-list">
+            ${profili.map(p => `
+              <div class="profile-row ${p.id === attivo ? "attivo" : ""}">
+                <span class="profile-emoji">${p.emoji}</span>
+                <span class="profile-name">${App.escapeHTML(p.name)}</span>
+                ${p.id === attivo
+                  ? `<span class="profile-badge">✅ ${en ? "Active" : "Attivo"}</span>`
+                  : `<button class="btn btn-soft" data-attiva="${p.id}">${en ? "Switch" : "Attiva"}</button>`}
+                ${p.id !== "default" ? `<button class="btn-icon" data-elimina="${p.id}" title="${en ? "Delete" : "Elimina"}" aria-label="${en ? "Delete profile" : "Elimina profilo"}">🗑️</button>` : ""}
+              </div>`).join("")}
+          </div>
+          <form data-nuovo-profilo style="margin-top:1rem">
+            <div class="field">
+              <label for="profilo-nome">${en ? "New profile name (nickname, not required to be real)" : "Nome nuovo profilo (un soprannome va benissimo)"}</label>
+              <input type="text" id="profilo-nome" maxlength="40" placeholder="${en ? "e.g. “Student 3” or a nickname" : "Es. “Alunno 3” o un soprannome"}">
+            </div>
+            <button class="btn" type="submit">➕ ${en ? "Create profile" : "Crea profilo"}</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2 style="font-size:1.1rem; margin-bottom:.4rem">📊 ${en ? "Teacher dashboard" : "Cruscotto insegnante"}</h2>
+          <p style="color:var(--text-soft); font-size:.85rem; margin-bottom:.8rem">${en
+            ? "Read directly from this browser's local storage — not a live sync. Refresh this page after students use their profiles to update the numbers."
+            : "Letto direttamente dalla memoria locale di questo browser — non è una sincronizzazione live. Ricarica questa pagina dopo che gli studenti hanno usato i loro profili per aggiornare i numeri."}</p>
+          <div class="table-scroll">
+            <table class="score-table">
+              <thead><tr>
+                <th>${en ? "Profile" : "Profilo"}</th>
+                <th>🏋️ ${en ? "Workouts" : "Allenamenti"}</th>
+                <th>✅ ${en ? "Tasks" : "Attività"}</th>
+                <th>🎮 ${en ? "Games" : "Partite"}</th>
+                <th>🔥 ${en ? "Streak" : "Serie"}</th>
+              </tr></thead>
+              <tbody>
+                ${profili.map(p => {
+                  const s = DB.readProfileStatsRaw(p.id) || {};
+                  return `<tr>
+                    <td>${p.emoji} ${App.escapeHTML(p.name)}</td>
+                    <td class="score-val">${s.workoutsDone || 0}</td>
+                    <td class="score-val">${s.totalTasksDone || 0}</td>
+                    <td class="score-val">${s.totalGames || 0}</td>
+                    <td class="score-val">${s.visitStreak || 0}</td>
+                  </tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+
+    main.querySelector("[data-nuovo-profilo]").addEventListener("submit", e => {
+      e.preventDefault();
+      const input = main.querySelector("#profilo-nome");
+      const name = input.value.trim();
+      if (!name) { toast(en ? "Give the profile a name first 😊" : "Dai prima un nome al profilo 😊"); return; }
+      const emoji = EMOJI_PROFILO[Math.floor(Math.random() * EMOJI_PROFILO.length)];
+      DB.createProfile(name, emoji);
+      viewClasse();
+    });
+    main.querySelectorAll("[data-attiva]").forEach(b => b.addEventListener("click", () => {
+      DB.switchProfile(b.dataset.attiva);
+      applySettings();
+      checkBadges();
+      toast(en ? "Profile switched 👤" : "Profilo cambiato 👤");
+      route();
+    }));
+    main.querySelectorAll("[data-elimina]").forEach(b => b.addEventListener("click", () => {
+      if (!confirm(en ? "Delete this profile and all its progress? This can't be undone." : "Eliminare questo profilo e tutti i suoi progressi? Non si può annullare.")) return;
+      DB.deleteProfile(b.dataset.elimina);
+      viewClasse();
+    }));
+  }
+
   function viewImpostazioni() {
     const st = DB.state.settings;
+    const en = lang() === "en";
     main.innerHTML = `
       <div class="view" style="max-width:640px; margin:0 auto">
         <div class="page-head">
-          <h1>⚙️ Opzioni</h1>
-          <p>Adatta NeuroSpazio ai tuoi sensi e alle tue preferenze. Tutto resta salvato solo sul tuo dispositivo.</p>
+          <h1>⚙️ ${en ? "Settings" : "Opzioni"}</h1>
+          <p>${en ? "Adapt NeuroSpazio to your senses and preferences. Everything stays saved only on your device." : "Adatta NeuroSpazio ai tuoi sensi e alle tue preferenze. Tutto resta salvato solo sul tuo dispositivo."}</p>
         </div>
+
+        <div class="card" style="margin-bottom:1.2rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.4rem">🌐 ${en ? "Language" : "Lingua"}</h2>
+          <div class="seg" role="group" aria-label="${en ? "Interface language" : "Lingua dell'interfaccia"}">
+            <button data-lang-opt="it" class="${!en ? "active" : ""}">🇮🇹 Italiano</button>
+            <button data-lang-opt="en" class="${en ? "active" : ""}">🇬🇧 English</button>
+          </div>
+          <p style="color:var(--text-soft); font-size:.85rem; margin-top:.6rem">${en
+            ? "Navigation, games, tools, and screening tests are translated. Long-form content (guided paths, in-depth resources) is Italian-only for now — you'll see a small notice where that applies."
+            : "Navigazione, giochi, strumenti e test di screening sono tradotti in inglese. I contenuti lunghi (percorsi, risorse approfondite) restano solo in italiano — vedrai un piccolo avviso dove succede."}</p>
+        </div>
+        ${en ? onlyItNoticeHTML() : ""}
 
         <div class="card" style="margin-bottom:1.2rem">
           <h2 style="font-size:1.1rem; margin-bottom:.4rem">👤 Profilo età</h2>
@@ -1155,6 +1717,14 @@ const App = (() => {
           </div>
           <input type="file" data-file accept="application/json" style="display:none" aria-hidden="true">
         </div>
+
+        <div class="card" style="margin-top:1.2rem">
+          <h2 style="font-size:1.1rem; margin-bottom:.5rem">🏫 ${en ? "For teachers" : "Per insegnanti"}</h2>
+          <p style="color:var(--text-soft); font-size:.9rem; margin-bottom:.8rem">${en
+            ? "Sharing one device with a class? Class Mode keeps each student's progress separate, locally."
+            : "Condividi un dispositivo con la classe? La Modalità Classe tiene i progressi di ogni studente separati, in locale."}</p>
+          <a class="btn btn-soft" href="#/classe">🏫 ${en ? "Open Class Mode" : "Apri Modalità Classe"}</a>
+        </div>
       </div>`;
 
     main.querySelectorAll("[data-eta-opt]").forEach(b => b.addEventListener("click", () => {
@@ -1166,6 +1736,10 @@ const App = (() => {
       viewImpostazioni();
     }));
 
+    main.querySelectorAll("[data-lang-opt]").forEach(b => b.addEventListener("click", () => {
+      st.lang = b.dataset.langOpt;
+      DB.save(); applySettings(); viewImpostazioni();
+    }));
     main.querySelectorAll("[data-theme-opt]").forEach(b => b.addEventListener("click", () => {
       st.theme = b.dataset.themeOpt;
       DB.save(); applySettings(); viewImpostazioni();
@@ -1242,20 +1816,26 @@ const App = (() => {
 
   /* ---------- router ---------- */
   const routes = [
-    { re: /^\/?$|^\/home$/, view: viewHome, nav: "home" },
-    { re: /^\/giochi$/, view: viewGiochi, nav: "giochi" },
-    { re: /^\/gioco\/([\w-]+)$/, view: viewGioco, nav: "giochi" },
-    { re: /^\/strumenti$/, view: viewStrumenti, nav: "strumenti" },
-    { re: /^\/strumento\/([\w-]+)$/, view: viewStrumento, nav: "strumenti" },
-    { re: /^\/risorse$/, view: viewRisorse, nav: "risorse" },
-    { re: /^\/inizia$/, view: viewInizia, nav: "home" },
-    { re: /^\/test$/, view: viewTests, nav: "risorse" },
-    { re: /^\/test\/([\w-]+)$/, view: viewTest, nav: "risorse" },
-    { re: /^\/percorsi$/, view: viewPercorsi, nav: "risorse" },
-    { re: /^\/percorso\/([\w-]+)$/, view: viewPercorso, nav: "risorse" },
-    { re: /^\/progressi$/, view: viewProgressi, nav: "progressi" },
-    { re: /^\/report$/, view: viewReport, nav: "progressi" },
-    { re: /^\/impostazioni$/, view: viewImpostazioni, nav: "impostazioni" },
+    { re: /^\/?$|^\/home$/, view: viewHome, nav: "home", title: "NeuroSpazio — la palestra della mente per ADHD, autismo, DSA e non solo" },
+    { re: /^\/giochi$/, view: viewGiochi, nav: "giochi", title: "Giochi cognitivi con basi scientifiche — NeuroSpazio" },
+    { re: /^\/gioco\/([\w-]+)$/, view: viewGioco, nav: "giochi", title: "Gioco — NeuroSpazio" },
+    { re: /^\/strumenti$/, view: viewStrumenti, nav: "strumenti", title: "Strumenti per focus, organizzazione e calma — NeuroSpazio" },
+    { re: /^\/strumento\/([\w-]+)$/, view: viewStrumento, nav: "strumenti", title: "Strumento — NeuroSpazio" },
+    { re: /^\/risorse$/, view: viewRisorse, nav: "risorse", title: "Risorse su ADHD, autismo e DSA con fonti scientifiche — NeuroSpazio" },
+    { re: /^\/inizia$/, view: viewInizia, nav: "home", title: "Inizia da qui — NeuroSpazio" },
+    { re: /^\/test$/, view: viewTests, nav: "risorse", title: "Test di screening ADHD, autismo e ansia — NeuroSpazio" },
+    { re: /^\/test\/([\w-]+)$/, view: viewTest, nav: "risorse", title: "Test di screening — NeuroSpazio" },
+    { re: /^\/percorsi$/, view: viewPercorsi, nav: "risorse", title: "Percorsi guidati di 7 giorni — NeuroSpazio" },
+    { re: /^\/percorso\/([\w-]+)$/, view: viewPercorso, nav: "risorse", title: "Percorso guidato — NeuroSpazio" },
+    { re: /^\/progressi$/, view: viewProgressi, nav: "progressi", title: "I tuoi progressi — NeuroSpazio" },
+    { re: /^\/report$/, view: viewReport, nav: "progressi", title: "Report per il professionista — NeuroSpazio" },
+    { re: /^\/impostazioni$/, view: viewImpostazioni, nav: "impostazioni", title: "Opzioni — NeuroSpazio" },
+    { re: /^\/accessibilita$/, view: viewAccessibilita, nav: "impostazioni", title: "Dichiarazione di accessibilità — NeuroSpazio" },
+    { re: /^\/privacy$/, view: viewPrivacy, nav: "impostazioni", title: "Privacy — NeuroSpazio" },
+    { re: /^\/classe$/, view: viewClasse, nav: "impostazioni", title: "Modalità Classe — NeuroSpazio" },
+    { re: /^\/ricerca$/, view: viewRicerca, nav: "risorse", title: "Per ricercatori — NeuroSpazio" },
+    { re: /^\/sostieni$/, view: viewSostieni, nav: "impostazioni", title: "Sostienici — NeuroSpazio" },
+    { re: /^\/media$/, view: viewMediaKit, nav: "impostazioni", title: "Media kit — NeuroSpazio" },
   ];
 
   function navigate(path) { location.hash = "#" + path; }
@@ -1264,10 +1844,10 @@ const App = (() => {
     runCleanups();
     if ("speechSynthesis" in window) speechSynthesis.cancel();
     currentGameId = null; // viewGioco lo reimposta quando serve
-    document.title = "NeuroSpazio";
     const path = location.hash.slice(1) || "/home";
     const r = routes.find(x => x.re.test(path));
     if (!r) return navigate("/home");
+    document.title = r.title || "NeuroSpazio";
     const m = path.match(r.re);
     document.querySelectorAll(".mainnav a").forEach(a =>
       a.classList.toggle("active", a.dataset.nav === r.nav));
@@ -1283,6 +1863,13 @@ const App = (() => {
     DB.touchVisit();
     checkBadges();
     route();
+    const toggle = document.getElementById("lang-toggle");
+    if (toggle) toggle.addEventListener("click", () => {
+      DB.state.settings.lang = lang() === "it" ? "en" : "it";
+      DB.save();
+      applySettings();
+      route();
+    });
     // PWA: installabile e utilizzabile offline (solo su http/https, non nel bundle standalone)
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js").catch(() => { /* facoltativo */ });

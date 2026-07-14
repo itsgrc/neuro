@@ -5,7 +5,52 @@
    ============================================================ */
 
 const DB = (() => {
-  const KEY = "neurospazio_v1";
+  const BASE_KEY = "neurospazio_v1";
+  const PROFILES_KEY = "neurospazio_profiles";
+  const CURRENT_KEY = "neurospazio_current_profile";
+
+  // --- profili locali (Modalità Classe): un dispositivo condiviso,
+  //     più profili isolati, nessun dato che lascia il browser ---
+  function keyFor(id) {
+    return id && id !== "default" ? `${BASE_KEY}__${id}` : BASE_KEY;
+  }
+  function listProfiles() {
+    try {
+      const raw = localStorage.getItem(PROFILES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveProfiles(list) {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+  }
+  function currentProfileId() {
+    return localStorage.getItem(CURRENT_KEY) || "default";
+  }
+  function createProfile(name, emoji) {
+    const list = listProfiles();
+    const profile = { id: uid(), name: name.trim().slice(0, 40), emoji: emoji || "🧒", createdAt: Date.now() };
+    list.push(profile);
+    saveProfiles(list);
+    return profile;
+  }
+  function deleteProfile(id) {
+    if (id === "default") return; // il profilo base non si elimina, solo si svuota da Opzioni
+    saveProfiles(listProfiles().filter(p => p.id !== id));
+    localStorage.removeItem(keyFor(id));
+    if (currentProfileId() === id) setCurrentProfile("default");
+  }
+  function setCurrentProfile(id) {
+    localStorage.setItem(CURRENT_KEY, id);
+  }
+  /** Legge le statistiche grezze di un profilo SENZA attivarlo (per il cruscotto insegnante). */
+  function readProfileStatsRaw(id) {
+    try {
+      const raw = localStorage.getItem(keyFor(id));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed.stats || null;
+    } catch (e) { return null; }
+  }
 
   const defaults = () => ({
     settings: {
@@ -16,6 +61,7 @@ const DB = (() => {
       sounds: true,
       notifications: false,   // notifiche locali di fine timer
       eta: null,              // fascia d'età: null | "bambini" | "ragazzi" | "adulti"
+      lang: "it",             // lingua interfaccia: "it" | "en"
     },
     stats: {
       totalGames: 0,
@@ -52,7 +98,7 @@ const DB = (() => {
 
   function load() {
     try {
-      const raw = localStorage.getItem(KEY);
+      const raw = localStorage.getItem(keyFor(currentProfileId()));
       if (raw) {
         const saved = JSON.parse(raw);
         // unione superficiale con i default per compatibilità futura
@@ -73,14 +119,14 @@ const DB = (() => {
 
   function save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(keyFor(currentProfileId()), JSON.stringify(state));
     } catch (e) {
       console.warn("Impossibile salvare lo stato", e);
     }
   }
 
   function reset() {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem(keyFor(currentProfileId()));
     state = defaults();
     save();
   }
@@ -92,8 +138,17 @@ const DB = (() => {
   function importJSON(text) {
     const parsed = JSON.parse(text); // lancia se non valido
     if (typeof parsed !== "object" || parsed === null) throw new Error("Formato non valido");
-    localStorage.setItem(KEY, JSON.stringify(parsed));
+    localStorage.setItem(keyFor(currentProfileId()), JSON.stringify(parsed));
     load();
+  }
+
+  /** Cambia profilo attivo e ricarica lo stato da quel profilo.
+      Salva subito, così un profilo nuovo esiste davvero in localStorage
+      anche prima che l'utente faccia la prima azione. */
+  function switchProfile(id) {
+    setCurrentProfile(id);
+    load();
+    save();
   }
 
   // --- utilità data ---
@@ -141,6 +196,7 @@ const DB = (() => {
   }
 
   return { load, save, reset, exportJSON, importJSON, todayKey, uid, touchVisit, submitScore, logEvento,
+    listProfiles, createProfile, deleteProfile, currentProfileId, switchProfile, readProfileStatsRaw,
     get state() { return state; } };
 })();
 

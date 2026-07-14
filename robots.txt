@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://itsgrc.github.io/neuro/sitemap.xml

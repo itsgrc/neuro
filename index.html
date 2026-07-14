@@ -3,13 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="NeuroSpazio — giochi, strumenti e supporto per ADHD e altre neurodivergenze. Pomodoro, gestione attività, allenamento cognitivo, calma e molto altro.">
-  <meta name="theme-color" content="#6c5ce7">
+  <meta name="description" content="NeuroSpazio — la palestra della mente: giochi e strumenti scientificamente fondati per ADHD, autismo, DSA, ansia e Tourette, utili anche a chi non è neurodivergente. Gratis, senza account, tutti i dati restano sul tuo dispositivo.">
+  <meta name="theme-color" content="#4834e1">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="NeuroSpazio">
+  <!-- NOTA SEO: dominio placeholder in attesa dell'attivazione di GitHub Pages
+       (Settings → Pages sul repository). Sostituire con l'URL reale prima del
+       lancio pubblico: aggiorna canonical, og:url e sitemap.xml. -->
+  <link rel="canonical" href="https://itsgrc.github.io/neuro/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NeuroSpazio — la palestra della mente">
+  <meta property="og:description" content="Giochi e strumenti scientificamente fondati per ADHD, autismo, DSA, ansia e Tourette — utili a chiunque abbia un cervello. Gratis, senza account, privacy totale.">
+  <meta property="og:image" content="https://itsgrc.github.io/neuro/icons/og-image.png">
+  <meta property="og:url" content="https://itsgrc.github.io/neuro/">
+  <meta property="og:locale" content="it_IT">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NeuroSpazio — la palestra della mente">
+  <meta name="twitter:description" content="Giochi e strumenti scientificamente fondati per ADHD, autismo, DSA, ansia e Tourette — utili a chiunque abbia un cervello.">
+  <meta name="twitter:image" content="https://itsgrc.github.io/neuro/icons/og-image.png">
   <title>NeuroSpazio — giochi e strumenti per menti neurodivergenti</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "NeuroSpazio",
+    "alternateName": "La palestra della mente",
+    "description": "Giochi e strumenti scientificamente fondati per ADHD, autismo, DSA, ansia e Tourette, utili anche a chi non è neurodivergente. Gratis, senza account, nessun dato lascia il dispositivo.",
+    "applicationCategory": ["HealthApplication", "EducationalApplication", "GameApplication"],
+    "operatingSystem": "Any (Progressive Web App)",
+    "inLanguage": "it-IT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "audience": { "@type": "Audience", "audienceType": "Persone neurodivergenti e non, dai 6 anni in su" }
+  }
+  </script>
 </head>
 <body>
 
@@ -21,25 +53,34 @@
       <span class="logo-text">Neuro<strong>Spazio</strong></span>
     </a>
     <nav class="mainnav" aria-label="Navigazione principale">
-      <a href="#/home" data-nav="home"><span aria-hidden="true">🏠</span><span>Home</span></a>
-      <a href="#/giochi" data-nav="giochi"><span aria-hidden="true">🎮</span><span>Giochi</span></a>
-      <a href="#/strumenti" data-nav="strumenti"><span aria-hidden="true">🧰</span><span>Strumenti</span></a>
-      <a href="#/risorse" data-nav="risorse"><span aria-hidden="true">📚</span><span>Risorse</span></a>
-      <a href="#/progressi" data-nav="progressi"><span aria-hidden="true">🏆</span><span>Progressi</span></a>
-      <a href="#/impostazioni" data-nav="impostazioni"><span aria-hidden="true">⚙️</span><span>Opzioni</span></a>
+      <a href="#/home" data-nav="home"><span aria-hidden="true">🏠</span><span data-i18n="nav_home">Home</span></a>
+      <a href="#/giochi" data-nav="giochi"><span aria-hidden="true">🎮</span><span data-i18n="nav_giochi">Giochi</span></a>
+      <a href="#/strumenti" data-nav="strumenti"><span aria-hidden="true">🧰</span><span data-i18n="nav_strumenti">Strumenti</span></a>
+      <a href="#/risorse" data-nav="risorse"><span aria-hidden="true">📚</span><span data-i18n="nav_risorse">Risorse</span></a>
+      <a href="#/progressi" data-nav="progressi"><span aria-hidden="true">🏆</span><span data-i18n="nav_progressi">Progressi</span></a>
+      <a href="#/impostazioni" data-nav="impostazioni"><span aria-hidden="true">⚙️</span><span data-i18n="nav_impostazioni">Opzioni</span></a>
     </nav>
+    <button class="lang-toggle" id="lang-toggle" aria-label="Cambia lingua / Change language" title="Cambia lingua / Change language">🌐 <span data-i18n="lang_toggle">EN</span></button>
   </header>
 
   <main id="main" class="main" tabindex="-1"></main>
 
   <footer class="footer">
-    <p><strong>NeuroSpazio</strong> non sostituisce un parere medico. Se hai dubbi sulla tua salute, parlane con una persona professionista. 💜</p>
+    <p data-i18n-html="footer_disclaimer"><strong>NeuroSpazio</strong> non sostituisce un parere medico. Se hai dubbi sulla tua salute, parlane con una persona professionista. 💜</p>
+    <p class="footer-links">
+      <a href="#/privacy">Privacy</a> ·
+      <a href="#/accessibilita">Accessibilità</a> ·
+      <a href="#/ricerca">Per ricercatori</a> ·
+      <a href="#/sostieni">Sostienici</a> ·
+      <a href="#/media">Media kit</a>
+    </p>
   </footer>
 
   <div id="toast-zone" class="toast-zone" aria-live="polite"></div>
   <div id="confetti-zone" class="confetti-zone" aria-hidden="true"></div>
 
   <script src="js/storage.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/data.js"></script>
   <script src="js/games.js"></script>
   <script src="js/tools.js"></script>

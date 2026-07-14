@@ -51,7 +51,7 @@ function renderPomodoro(container) {
           <div class="pomo-time" data-time></div>
         </div>
       </div>
-      <div class="pomo-dots" data-dots aria-label="Sessioni completate oggi"></div>
+      <div class="pomo-dots" data-dots role="group" aria-label="Sessioni completate oggi"></div>
       <div class="btn-row" style="justify-content:center; margin-top:1.2rem">
         <button class="btn btn-big" data-play>▶️ Inizia</button>
         <button class="btn btn-ghost" data-skip>⏭️ Salta fase</button>
@@ -1055,18 +1055,21 @@ function renderSOSCard(container) {
       DB.save();
       App.toast("Carta salvata, pronta quando serve 💜");
     });
-    container.querySelector("[data-apri]").addEventListener("click", () => {
+    container.querySelector("[data-apri]").addEventListener("click", e => {
       DB.state.sos.msg = container.querySelector("#sos-msg").value.trim() || DB.state.sos.msg;
       DB.save();
-      apriCarta();
+      apriCarta(e.currentTarget);
     });
   }
 
-  function apriCarta() {
+  function apriCarta(triggerEl) {
     const sos = DB.state.sos;
     const scelti = BISOGNI.filter(b => sos.needs.includes(b.id));
     const overlay = document.createElement("div");
     overlay.className = "sos-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "Carta di comunicazione SOS");
     overlay.innerHTML = `
       <button class="sos-close" aria-label="Chiudi la carta">✕</button>
       <p class="sos-msg">${App.escapeHTML(sos.msg)}</p>
@@ -1076,9 +1079,31 @@ function renderSOSCard(container) {
       </div>` : ""}
       <p class="sos-footer">Grazie per la pazienza. Passerà. 💜</p>`;
     document.body.appendChild(overlay);
-    const chiudi = () => overlay.remove();
-    overlay.querySelector(".sos-close").addEventListener("click", chiudi);
+
+    const chiudi = () => {
+      overlay.remove();
+      document.removeEventListener("keydown", onKeydown);
+      (triggerEl || document.body).focus?.();
+    };
     App.addCleanup(chiudi);
+    overlay.querySelector(".sos-close").addEventListener("click", chiudi);
+
+    // focus trap: Tab/Shift+Tab restano dentro l'overlay, Esc chiude
+    function focusabili() {
+      return Array.from(overlay.querySelectorAll("button, [href], [tabindex]"));
+    }
+    function onKeydown(e) {
+      if (e.key === "Escape") { e.preventDefault(); chiudi(); return; }
+      if (e.key !== "Tab") return;
+      const els = focusabili();
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener("keydown", onKeydown);
+    overlay.querySelector(".sos-close").focus();
+
     // tocca un bisogno per evidenziarlo (per indicare senza parlare)
     overlay.querySelectorAll(".sos-need").forEach(b =>
       b.addEventListener("click", () => {

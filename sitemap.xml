@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NOTA SUI LIMITI SEO DI QUESTA SITEMAP (onestà prima di tutto):
+  NeuroSpazio è una Single Page Application con routing via hash
+  (#/percorso). I motori di ricerca moderni (Googlebot) eseguono
+  JavaScript e possono scoprire i contenuti dinamici, ma le "pagine"
+  con frammento hash (#) non sono URL distinti indicizzabili come lo
+  sarebbero vere sotto-pagine server-side: Google le considera varianti
+  della stessa risorsa (index.html), non pagine separate in indice.
+  Questa sitemap elenca quindi solo il punto di ingresso reale.
+  Per una SEO più efficace in futuro servirebbe pre-rendering statico
+  (es. Prerender.io) o una vera struttura di routing lato server/SSG
+  per le pagine ad alto valore (Risorse, Test di screening, Percorsi).
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://itsgrc.github.io/neuro/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
