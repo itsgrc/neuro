@@ -4,6 +4,8 @@
 
 NeuroSpazio è una web app (PWA installabile) nata per menti neurodivergenti (ADHD, autismo, DSA e non solo) e aperta a tutti: un posto accogliente dove allenare la mente con un circuito quotidiano su basi scientifiche, organizzare le giornate senza sovraccaricarsi e ritrovare la calma nei momenti difficili.
 
+![Demo di NeuroSpazio: home, palestra dei giochi e strumento di respirazione](docs/demo.gif)
+
 ## ✨ Cosa c'è dentro
 
 ### 🏋️ La palestra: allenamento del giorno
