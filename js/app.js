@@ -1870,6 +1870,19 @@ const App = (() => {
       applySettings();
       route();
     });
+    // avviso "in costruzione": resta visibile finché non lo chiudi, e
+    // torna a comparire alla prossima sessione (sessionStorage, non permanente)
+    const banner = document.getElementById("construction-banner");
+    const dismissBtn = document.getElementById("construction-dismiss");
+    if (banner && dismissBtn) {
+      try {
+        if (sessionStorage.getItem("neurospazio_banner_dismissed")) banner.classList.add("hidden");
+      } catch (e) { /* sessionStorage non disponibile: banner resta visibile */ }
+      dismissBtn.addEventListener("click", () => {
+        banner.classList.add("hidden");
+        try { sessionStorage.setItem("neurospazio_banner_dismissed", "1"); } catch (e) { /* ignora */ }
+      });
+    }
     // PWA: installabile e utilizzabile offline (solo su http/https, non nel bundle standalone)
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js").catch(() => { /* facoltativo */ });

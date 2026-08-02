@@ -121,6 +121,29 @@ a { color: var(--primary); }
   border-radius: 4px;
 }
 
+/* ---------- Avviso "in costruzione" ---------- */
+.construction-banner {
+  position: sticky; top: 0; z-index: 55;
+  display: flex; align-items: center; justify-content: center; gap: .8rem;
+  background: var(--gold-soft); color: var(--text);
+  border-bottom: 1px solid var(--gold);
+  padding: .55rem 1rem;
+  font-size: .85rem; font-weight: 600; text-align: center;
+  line-height: 1.4;
+}
+.construction-banner .cb-text { max-width: 60ch; }
+.construction-banner a { color: var(--gold); font-weight: 800; text-decoration: underline; }
+.construction-banner.hidden { display: none; }
+.cb-close {
+  border: none; background: transparent; color: var(--text-soft);
+  font-size: 1rem; line-height: 1; padding: .2rem .4rem; flex-shrink: 0;
+  border-radius: 8px;
+}
+.cb-close:hover { background: rgba(0,0,0,.08); color: var(--text); }
+@media (max-width: 600px) {
+  .construction-banner { font-size: .78rem; padding: .5rem .7rem; }
+}
+
 /* ---------- Barra superiore ---------- */
 .topbar {
   position: sticky; top: 0; z-index: 50;

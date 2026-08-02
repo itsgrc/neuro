@@ -11,16 +11,18 @@ const I18N = {
   it: {
     nav_home: "Home", nav_giochi: "Giochi", nav_strumenti: "Strumenti",
     nav_risorse: "Risorse", nav_progressi: "Progressi", nav_impostazioni: "Opzioni",
-    footer_disclaimer: "<strong>NeuroSpazio</strong> non sostituisce un parere medico. Se hai dubbi sulla tua salute, parlane con una persona professionista. 💜",
+    footer_disclaimer: "<strong>NeuroSpazio</strong> è uno strumento educativo e di benessere, <strong>non un dispositivo medico</strong>: non diagnostica, non cura, non previene alcuna condizione. Non sostituisce un parere medico. Se hai dubbi sulla tua salute, parlane con una persona professionista. In emergenza: 112. 💜",
     lang_toggle: "EN",
     only_it_notice: "🇮🇹 Da qui in poi i contenuti dettagliati sono disponibili solo in italiano. Stiamo lavorando alla traduzione completa.",
+    construction_banner: "NeuroSpazio è in costruzione: contenuti e funzionalità cambiano ancora. Se trovi un problema, <a href=\"https://github.com/itsgrc/neuro/issues\" target=\"_blank\" rel=\"noopener\">segnalalo su GitHub</a>.",
   },
   en: {
     nav_home: "Home", nav_giochi: "Games", nav_strumenti: "Tools",
     nav_risorse: "Resources", nav_progressi: "Progress", nav_impostazioni: "Settings",
-    footer_disclaimer: "<strong>NeuroSpazio</strong> does not replace medical advice. If you have concerns about your health, talk to a qualified professional. 💜",
+    footer_disclaimer: "<strong>NeuroSpazio</strong> is an educational and wellness tool, <strong>not a medical device</strong>: it does not diagnose, treat, or prevent any condition. It does not replace medical advice. If you have concerns about your health, talk to a qualified professional. 💜",
     lang_toggle: "IT",
     only_it_notice: "🇮🇹 From here on, detailed content is only available in Italian. Full translation is in progress.",
+    construction_banner: "NeuroSpazio is under construction: content and features are still changing. Found a problem? <a href=\"https://github.com/itsgrc/neuro/issues\" target=\"_blank\" rel=\"noopener\">Report it on GitHub</a>.",
   },
 };
 
