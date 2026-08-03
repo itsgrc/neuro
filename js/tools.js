@@ -17,6 +17,7 @@ const TOOLS = [
   { id: "sos",       emoji: "🆘", nome: "Carta SOS",           tag: "calma",          desc: "Quando le parole non escono, questa carta parla per te. Preparala prima.", render: renderSOSCard },
   { id: "bodyscan",  emoji: "🧘", nome: "Scansione corporea",  tag: "calma",          desc: "Un viaggio guidato nel corpo, una zona alla volta. Mindfulness senza fronzoli.", render: renderBodyscan },
   { id: "gratitudine", emoji: "✨", nome: "Tre cose buone",     tag: "calma",          desc: "Ogni sera, tre cose andate bene. L'esercizio più studiato della psicologia positiva.", render: renderGratitudine },
+  { id: "coach",       emoji: "🧑‍🏫", nome: "Coach di studio",  tag: "focus",          desc: "Capisce come studi davvero (dai tuoi dati) e ti consiglia cosa provare, con le fonti.", render: renderCoach },
 ];
 
 /* ============================================================
@@ -92,17 +93,24 @@ function renderPomodoro(container) {
     aggiorna();
   }
 
-  function fineFase() {
+  function fineFase(saltata = false) {
     App.beep(660, 0.15); setTimeout(() => App.beep(880, 0.25), 180);
     if (fase === "lavoro") {
-      fatteOggi++;
-      DB.state.stats.totalPomodoros++;
-      DB.logEvento("pomodoro");
-      App.checkBadges();
-      App.confetti();
-      App.toast("🍅 Sessione di focus completata! Ora pausa vera: alzati e muoviti.");
-      App.notify("🍅 Sessione completata!", "Ora pausa vera: alzati, muoviti, bevi.");
-      disegnaDots();
+      const presetKey = `${cfg.work}-${cfg.pause}`;
+      const ps = DB.state.stats.pomodoroPreset;
+      if (!ps[presetKey]) ps[presetKey] = { completate: 0, saltate: 0 };
+      if (saltata) ps[presetKey].saltate++; else ps[presetKey].completate++;
+      if (!saltata) {
+        fatteOggi++;
+        DB.state.stats.totalPomodoros++;
+        DB.logEvento("pomodoro");
+        App.checkBadges();
+        App.confetti();
+        App.toast("🍅 Sessione di focus completata! Ora pausa vera: alzati e muoviti.");
+        App.notify("🍅 Sessione completata!", "Ora pausa vera: alzati, muoviti, bevi.");
+        disegnaDots();
+      }
+      DB.save();
       impostaFase("pausa");
     } else {
       App.toast("🔔 Pausa finita. Pronto per un'altra sessione?");
@@ -132,7 +140,7 @@ function renderPomodoro(container) {
   }
 
   btnPlay.addEventListener("click", () => (attivo ? pausa() : via()));
-  container.querySelector("[data-skip]").addEventListener("click", () => { pausa(); fineFase(); });
+  container.querySelector("[data-skip]").addEventListener("click", () => { pausa(); fineFase(fase === "lavoro"); });
   container.querySelector("[data-reset]").addEventListener("click", () => { pausa(); impostaFase(fase); });
 
   container.querySelectorAll("[data-preset]").forEach(b => {
@@ -201,6 +209,7 @@ function renderAttivita(container) {
         const act = btn.dataset.act;
         if (act === "done") {
           t.col = "fatto";
+          t.completedAt = Date.now();
           DB.state.stats.totalTasksDone++;
           DB.logEvento("task");
           App.checkBadges();
@@ -1279,6 +1288,151 @@ function renderGratitudine(container) {
       }
       draw();
     });
+  }
+
+  draw();
+}
+
+/* ============================================================
+   COACH DI STUDIO
+   Analizza SOLO i dati già presenti sul dispositivo (nessuna
+   chiamata esterna, nessun modello di IA) per capire come studi
+   e proporre consigli basati sulla scienza dell'apprendimento.
+   Onestà: ogni sezione compare solo se ci sono dati sufficienti
+   per dirla con un minimo di fondamento.
+   ============================================================ */
+function renderCoach(container) {
+  const DOMINI_GIOCO = {
+    memoria: { nome: "memoria", giochi: ["memoria", "simon", "corsi", "flusso"] },
+    inibizione: { nome: "controllo degli impulsi", giochi: ["stroop", "gonogo"] },
+    flessibilita: { nome: "flessibilità mentale", giochi: ["rotta"] },
+    attenzione: { nome: "attenzione visiva", giochi: ["riflessi", "numeri"] },
+    numero: { nome: "senso del numero", giochi: ["stima"] },
+    tempo: { nome: "percezione del tempo", giochi: ["tempo"] },
+  };
+
+  function fasceOrarie(eventi) {
+    if (eventi.length < 6) return null;
+    const fasce = { "mattina (6–12)": 0, "pomeriggio (12–18)": 0, "sera (18–24)": 0, "notte (0–6)": 0 };
+    eventi.forEach(e => {
+      const h = new Date(e.t).getHours();
+      if (h >= 6 && h < 12) fasce["mattina (6–12)"]++;
+      else if (h >= 12 && h < 18) fasce["pomeriggio (12–18)"]++;
+      else if (h >= 18) fasce["sera (18–24)"]++;
+      else fasce["notte (0–6)"]++;
+    });
+    const [nome, n] = Object.entries(fasce).sort((a, b) => b[1] - a[1])[0];
+    return { nome, perc: Math.round((n / eventi.length) * 100) };
+  }
+
+  function migliorPreset() {
+    const ps = DB.state.stats.pomodoroPreset || {};
+    const righe = Object.entries(ps)
+      .map(([k, v]) => ({ k, tot: v.completate + v.saltate, perc: v.completate / (v.completate + v.saltate || 1) }))
+      .filter(r => r.tot >= 3);
+    if (!righe.length) return null;
+    righe.sort((a, b) => b.perc - a.perc);
+    const top = righe[0];
+    const [work, pause] = top.k.split("-");
+    return { work, pause, percentuale: Math.round(top.perc * 100), tentativi: top.tot };
+  }
+
+  function latenzaAttivita() {
+    const fatte = DB.state.tasks.filter(t => t.col === "fatto" && t.completedAt && t.createdAt);
+    if (fatte.length < 4) return null;
+    const oreMedia = fatte.reduce((sum, t) => sum + (t.completedAt - t.createdAt), 0) / fatte.length / 3600000;
+    return oreMedia;
+  }
+
+  function dominioMenoAllenato() {
+    const storia = Object.values(DB.state.playedByDay || {}).flat();
+    if (storia.length < 5) return null;
+    const conteggi = Object.entries(DOMINI_GIOCO).map(([id, d]) => ({
+      id, nome: d.nome,
+      count: storia.filter(g => d.giochi.includes(g)).length,
+      giocoSuggerito: d.giochi.find(g => GAMES.find(x => x.id === g)),
+    }));
+    const esplorati = conteggi.filter(c => c.count > 0);
+    if (esplorati.length < 3) return null; // troppo presto per dire cosa "manca"
+    conteggi.sort((a, b) => a.count - b.count);
+    return conteggi[0];
+  }
+
+  function draw() {
+    const eventiPomodoro = (DB.state.eventi || []).filter(e => e.k === "pomodoro");
+    const fascia = fasceOrarie(eventiPomodoro.length >= 6 ? eventiPomodoro : DB.state.eventi || []);
+    const preset = migliorPreset();
+    const latenza = latenzaAttivita();
+    const dominio = dominioMenoAllenato();
+    const haDati = fascia || preset || latenza !== null || dominio;
+
+    const osservazioni = [];
+    if (fascia) osservazioni.push(`🕐 Il <strong>${fascia.perc}%</strong> delle tue sessioni di focus e partite avviene di <strong>${fascia.nome}</strong>: sembra la tua fascia d'oro.`);
+    if (preset) osservazioni.push(`🍅 Il timer da <strong>${preset.work}/${preset.pause} minuti</strong> è quello che porti a termine più spesso (<strong>${preset.percentuale}%</strong> delle volte, su ${preset.tentativi} tentativi).`);
+    if (latenza !== null) {
+      const desc = latenza < 2 ? "agisci quasi subito su ciò che scrivi" : latenza < 24 ? "di solito fai le cose entro la stessa giornata" : latenza < 72 ? "le attività restano in lista un giorno o due prima che tu le faccia" : "le attività restano in lista diversi giorni prima che tu le faccia";
+      osservazioni.push(`⏳ In media, <strong>${desc}</strong> (${latenza < 24 ? Math.round(latenza) + " ore" : Math.round(latenza / 24) + " giorni"} dalla creazione al completamento).`);
+    }
+    if (dominio) osservazioni.push(`🎯 Tra i domini che alleni, <strong>${dominio.nome}</strong> è quello che pratichi di meno finora.`);
+
+    const consigli = [];
+    if (dominio) consigli.push({
+      icona: "🔀", testo: `Prova <a href="#/gioco/${dominio.giocoSuggerito}">${GAMES.find(g => g.id === dominio.giocoSuggerito).nome}</a> per allenare ${dominio.nome}: mescolare domini diversi aiuta l'apprendimento più che ripetere sempre lo stesso tipo di esercizio.`,
+      fonte: "rohrer2007",
+    });
+    if (preset) consigli.push({
+      icona: "⏱️", testo: `Il timer da ${preset.work}/${preset.pause} minuti sembra la durata giusta per te: non serve forzarti su sessioni più lunghe se quella è quella che riesci davvero a completare.`,
+      fonte: "cepeda2006",
+    });
+    if (latenza !== null && latenza > 48) consigli.push({
+      icona: "🐭", testo: `Le attività restano in lista un po': se un pezzetto richiede meno di 2 minuti, fallo subito. Il resto, spezzalo in passi più piccoli in <a href="#/strumento/attivita">Le mie attività</a>.`,
+      fonte: "gollwitzer1999",
+    });
+    if (fascia) consigli.push({
+      icona: "🌅", testo: `Metti lo studio più impegnativo nella tua fascia d'oro (${fascia.nome}): il cervello non rende ugualmente in ogni momento della giornata.`,
+      fonte: null,
+    });
+    // consigli generali, sempre validi, usati per completare la lista
+    const generali = [
+      { icona: "🧠", testo: `Invece di rileggere gli appunti, chiuditi il libro e prova a <strong>ripeterli a voce</strong> o gioca a <a href="#/gioco/memoria">Coppie di memoria</a>: il richiamo attivo batte la rilettura per la memoria a lungo termine.`, fonte: "roediger2006" },
+      { icona: "📆", testo: `Studia la stessa cosa in <strong>3 sessioni brevi su giorni diversi</strong> invece che in una maratona: la pratica distribuita nel tempo funziona meglio della pratica concentrata.`, fonte: "cepeda2006" },
+      { icona: "📈", testo: `Se un esercizio ti sembra troppo facile, <strong>prova il livello sopra</strong>: le difficoltà “giuste” — non troppo facili, non impossibili — sono quelle che fanno davvero imparare.`, fonte: "bjork2011" },
+      { icona: "🔁", testo: `Rileggere e sottolineare <em>sembrano</em> utili ma sono tra le tecniche meno efficaci misurate; il richiamo attivo e la pratica distribuita restano le più solide.`, fonte: "dunlosky2013" },
+    ];
+    for (const g of generali) { if (consigli.length >= 5) break; consigli.push(g); }
+
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:1rem">
+        <p>Questo coach guarda <strong>solo i tuoi dati</strong>, già salvati sul dispositivo — niente esce da qui, nessun modello di IA è coinvolto. Più usi l'app (pomodoro, giochi, attività), più le osservazioni diventano precise.</p>
+      </div>
+
+      ${haDati ? `
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="margin-bottom:.7rem">🔍 Cosa abbiamo capito di come studi</h3>
+        <ul class="coach-list">${osservazioni.map(o => `<li>${o}</li>`).join("")}</ul>
+      </div>` : `
+      <div class="card" style="margin-bottom:1rem">
+        <p class="task-empty">Usa qualche timer di focus, gioco e attività nei prossimi giorni: qui appariranno le tue osservazioni personali, con dati veri invece di supposizioni. 🌱</p>
+      </div>`}
+
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="margin-bottom:.7rem">💡 Consigli su misura, con le fonti</h3>
+        <div class="coach-tips">
+          ${consigli.map(c => `
+            <div class="coach-tip">
+              <span class="ct-icon">${c.icona}</span>
+              <div class="ct-body">
+                <p>${c.testo}</p>
+                ${c.fonte ? `<p class="ct-fonte">📚 ${FONTI.find(f => f.id === c.fonte)?.testo || ""}</p>` : ""}
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <details class="science-box" style="margin-bottom:0">
+        <summary>🔬 Come funziona questo coach (onestà)</summary>
+        <p class="science-body">Nessuna rete neurale, nessuna chiamata a server esterni: è un motore di regole che legge i numeri già salvati nel tuo browser (orari dei timer, percentuale di sessioni completate per durata, tempo tra scrivere un'attività e finirla, quali giochi hai giocato meno) e sceglie quali consigli mostrarti tra un elenco scritto in anticipo, tutto basato su studi pubblicati. Non è una diagnosi né una valutazione clinica delle tue capacità di studio: è un termometro personale, pensato per suggerire, non per giudicare.</p>
+      </details>`;
   }
 
   draw();

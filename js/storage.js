@@ -73,6 +73,7 @@ const DB = (() => {
       visitStreak: 1,
       lastVisit: null,        // "YYYY-MM-DD"
       bestScores: {},         // { gameId: { label, value, better } }
+      pomodoroPreset: {},     // { "25-5": { completate, saltate } } per il Coach di studio
     },
     badges: [],               // id dei badge ottenuti
     tasks: [],                // { id, text, col: "oggi"|"dopo"|"fatto", done, createdAt }

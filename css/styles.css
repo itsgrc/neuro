@@ -890,6 +890,18 @@ details.res-details summary {
   background: var(--bg-soft); border-radius: var(--radius-s);
   padding: .7rem 1rem; font-size: .95rem;
 }
+
+/* ---------- Coach di studio ---------- */
+.coach-list { list-style: none; display: flex; flex-direction: column; gap: .6rem; padding: 0; }
+.coach-list li {
+  background: var(--primary-soft); color: var(--text);
+  border-radius: var(--radius-s); padding: .7rem 1rem; font-size: .93rem;
+}
+.coach-tips { display: flex; flex-direction: column; gap: .8rem; }
+.coach-tip { display: flex; gap: .7rem; background: var(--bg-soft); border-radius: var(--radius-s); padding: .8rem 1rem; }
+.coach-tip .ct-icon { font-size: 1.4rem; flex-shrink: 0; }
+.coach-tip .ct-body p:first-child { margin-bottom: .3rem; }
+.coach-tip .ct-fonte { font-size: .76rem; color: var(--text-soft); }
 .tts-btn {
   border: 2px solid var(--border); background: var(--bg-card);
   border-radius: 999px; padding: .3rem .8rem; font-size: .8rem; font-weight: 700;

@@ -321,7 +321,7 @@ const ETA_MIN = {
   tempo: 8, rotta: 7, stima: 6, corsi: 6, gonogo: 6,
   /* strumenti */
   pomodoro: 8, attivita: 8, dump: 10, abitudini: 6, umore: 6, routine: 6,
-  decisioni: 6, suoni: 6, respiro: 6, grounding: 8, sos: 6, bodyscan: 8, gratitudine: 8,
+  decisioni: 6, suoni: 6, respiro: 6, grounding: 8, sos: 6, bodyscan: 8, gratitudine: 8, coach: 10,
 };
 
 const ND_INFO = {
@@ -386,6 +386,11 @@ const FONTI = [
   { id: "kessler2005",    testo: "Kessler, R. C., et al. (2005). The World Health Organization Adult ADHD Self-Report Scale (ASRS): A short screening scale for use in the general population. <em>Psychological Medicine</em>, 35(2), 245–256." },
   { id: "allison2012",    testo: "Allison, C., Auyeung, B., & Baron-Cohen, S. (2012). Toward brief “red flags” for autism screening: The Short Autism Spectrum Quotient and the Short Quantitative Checklist in 1,000 cases and 3,000 controls. <em>Journal of the American Academy of Child & Adolescent Psychiatry</em>, 51(2), 202–212." },
   { id: "spitzer2006",    testo: "Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A brief measure for assessing generalized anxiety disorder: The GAD-7. <em>Archives of Internal Medicine</em>, 166(10), 1092–1097." },
+  { id: "dunlosky2013",   testo: "Dunlosky, J., Rawson, K. A., Marsh, E. J., Nathan, M. J., & Willingham, D. T. (2013). Improving students' learning with effective learning techniques: Promising directions from cognitive and educational psychology. <em>Psychological Science in the Public Interest</em>, 14(1), 4–58." },
+  { id: "roediger2006",   testo: "Roediger, H. L., & Karpicke, J. D. (2006). Test-enhanced learning: Taking memory tests improves long-term retention. <em>Psychological Science</em>, 17(3), 249–255." },
+  { id: "rohrer2007",     testo: "Rohrer, D., & Taylor, K. (2007). The shuffling of mathematics problems improves learning. <em>Instructional Science</em>, 35(6), 481–498." },
+  { id: "bjork2011",      testo: "Bjork, R. A., & Bjork, E. L. (2011). Making things hard on yourself, but in a good way: Creating desirable difficulties to enhance learning. In M. A. Gernsbacher et al. (Eds.), <em>Psychology and the Real World</em> (pp. 56–64). Worth Publishers." },
+  { id: "ericsson1993",   testo: "Ericsson, K. A., Krampe, R. T., & Tesch-Römer, C. (1993). The role of deliberate practice in the acquisition of expert performance. <em>Psychological Review</em>, 100(3), 363–406." },
 ];
 
 /* Fonti principali per ogni scheda della sezione Risorse */
@@ -526,6 +531,11 @@ const SCHEDE_SCIENZA = {
     nd: ["ansia"],
     perche: "“Tre cose buone” è uno degli esercizi più studiati della psicologia positiva: annotare ogni sera tre cose andate bene ha mostrato effetti misurabili su benessere e umore in studi controllati (Seligman et al., 2005; Emmons & McCullough, 2003). Non serve fingere ottimismo: serve dare al positivo lo stesso tempo di attenzione che il cervello dà gratis al negativo.",
     fonti: ["seligman2005", "emmons2003"],
+  },
+  coach: {
+    nd: ["adhd", "dsa"],
+    perche: "Non tutte le tecniche di studio sono ugualmente efficaci: la più ampia rassegna mai condotta sull'argomento ha promosso il richiamo attivo (fare pratica di recupero, come nei giochi di memoria) e la pratica distribuita nel tempo a “alta utilità”, mentre ha bocciato abitudini diffusissime come rileggere e sottolineare, di “bassa utilità” (Dunlosky et al., 2013). Il richiamo attivo migliora la ritenzione a lungo termine più della semplice rilettura, anche quando ci si sente meno sicuri durante il test (Roediger & Karpicke, 2006). Questo coach osserva i TUOI dati locali — orari, durate di sessione completate, velocità con cui agisci sulle attività, punti di forza nei giochi — per suggerirti, con queste basi, cosa provare per primo. Nessun modello di intelligenza artificiale è coinvolto: è un motore di regole trasparente, e resta tutto sul tuo dispositivo.",
+    fonti: ["dunlosky2013", "roediger2006", "cepeda2006", "rohrer2007"],
   },
 };
 

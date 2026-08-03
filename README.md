@@ -28,7 +28,7 @@ Ogni giorno l'app propone un **circuito di 3 esercizi** che ruota su tutti i dom
 
 Ogni gioco salva i record personali, sblocca badge 🏆 e include una scheda **"🔬 Per chi è pensato e perché funziona"** con le fonti.
 
-### 🧰 13 strumenti quotidiani
+### 🧰 14 strumenti quotidiani
 | Strumento | Più indicato per | Base scientifica |
 |---|---|---|
 | 🍅 **Timer di focus** (Pomodoro) | ⚡ ADHD · 📖 DSA | "Cecità al tempo": Barkley, 1997; Cirillo, 2018 |
@@ -44,8 +44,12 @@ Ogni gioco salva i record personali, sblocca badge 🏆 e include una scheda **"
 | 🆘 **Carta SOS** (comunicazione per shutdown/meltdown) | ♾️ Autismo · 🌊 Ansia | Principi CAA: Beukelman & Mirenda, 2013 |
 | 🧘 **Scansione corporea** (mindfulness guidata, 3/5 min) | 🌊 Ansia · ♾️ Autismo · per tutti | Khoury et al., 2013 |
 | ✨ **Tre cose buone** (diario della gratitudine) | 🌊 Ansia · per tutti | Seligman et al., 2005; Emmons & McCullough, 2003 |
+| 🧑‍🏫 **Coach di studio** (analisi personale del modo di studiare) | ⚡ ADHD · 📖 DSA | Dunlosky et al., 2013; Roediger & Karpicke, 2006 |
 
 Nelle pagine Giochi e Strumenti puoi **filtrare per neurodivergenza** (ADHD, autismo, DSA, ansia/emozioni, Tourette) **e per fascia d'età**.
+
+### 🧑‍🏫 Coach di studio (analisi locale, non IA)
+Analizza **solo i dati già salvati sul dispositivo** — orari dei timer di focus, percentuale di sessioni completate per ogni durata di Pomodoro, tempo medio tra la creazione di un'attività e il suo completamento, quali domini cognitivi hai allenato di meno — per suggerire consigli su misura basati sulla scienza dell'apprendimento (Dunlosky et al., 2013, la rassegna più ampia mai condotta sulle tecniche di studio; Roediger & Karpicke, 2006 sul richiamo attivo; Rohrer & Taylor, 2007 sull'interleaving; Bjork & Bjork, 2011 sulle "difficoltà desiderabili"). **Nessun modello di intelligenza artificiale è coinvolto**: è un motore di regole trasparente, spiegato apertamente nella scheda "Come funziona" dello strumento stesso — coerente con l'impegno zero-tracking di tutta l'app.
 
 ### 👤 Età e livelli per ogni visitatore
 - Ogni gioco e strumento mostra l'**età minima indicativa** (6+, 8+, 10+…)
@@ -77,7 +81,7 @@ L'app calcola **solo sul tuo dispositivo** i tuoi schemi (fasce orarie d'oro, tr
 - Ogni test mostra un **disclaimer esplicito prima e dopo** ("NON è una diagnosi"), è rivolto ai 18+, e il risultato collega direttamente a Risorse ("Dove trovare aiuto in Italia") ed esercizi indicati — mai un'etichetta clinica. Punteggi ed esiti restano solo sul dispositivo.
 
 ### 🔬 Basi scientifiche e onestà
-Ogni scheda cita fonti accademiche verificate (53 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
+Ogni scheda cita fonti accademiche verificate (58 riferimenti in bibliografia, consultabili su Google Scholar/PubMed), incluse le meta-analisi critiche sul brain training (Melby-Lervåg & Hulme, 2013; Simons et al., 2016): i giochi sono presentati come palestra e termometro dell'attenzione, non come terapia.
 
 ### 📚 Risorse
 Spiegazioni chiare e rispettose su ADHD, autismo, dislessia, discalculia, disgrafia, Tourette, funzioni esecutive ed emozioni intense, con strategie concrete, guide pratiche (studio, lavoro, casa, sonno, relazioni, autostima) e indicazioni su dove trovare aiuto in Italia.
@@ -151,7 +155,7 @@ css/styles.css        # stili, temi, accessibilità, stampa
 js/storage.js         # stato e persistenza (localStorage)
 js/data.js            # contenuti: risorse, percorsi, bibliografia, badge
 js/games.js           # gli 11 giochi
-js/tools.js           # i 13 strumenti
+js/tools.js           # i 14 strumenti
 js/app.js             # router, viste, insight, report, impostazioni
 ```
 

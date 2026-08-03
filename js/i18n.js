@@ -56,6 +56,7 @@ const TOOLS_EN = {
   sos:         { nome: "SOS Card", desc: "When words won't come out, this card speaks for you. Prepare it ahead of time." },
   bodyscan:    { nome: "Body Scan", desc: "A guided journey through the body, one area at a time. No-frills mindfulness." },
   gratitudine: { nome: "Three Good Things", desc: "Every evening, three things that went well. The most studied exercise in positive psychology." },
+  coach:       { nome: "Study Coach", desc: "Understands how you really study (from your own data) and suggests what to try, with sources." },
 };
 
 /* Traduzione inglese delle schede scientifiche brevi ("perché funziona"),
@@ -85,6 +86,7 @@ const SCIENZA_EN = {
   sos: "During a shutdown or overload, the verbal channel can genuinely shut down: that's not stubbornness, it's neurology (Lord et al., 2018). Preparing a message in advance follows core Augmentative and Alternative Communication principles (Beukelman & Mirenda, 2013).",
   bodyscan: "The body scan is a core mindfulness exercise; its effectiveness on anxiety and stress is documented by meta-analyses (Khoury et al., 2013).",
   gratitudine: "'Three good things' is one of the most studied exercises in positive psychology: noting three things that went well each evening has shown measurable effects on wellbeing (Seligman et al., 2005; Emmons & McCullough, 2003).",
+  coach: "Not all study techniques are equally effective: the largest review ever conducted rated retrieval practice and distributed practice as 'high utility', while common habits like rereading and highlighting were rated 'low utility' (Dunlosky et al., 2013). Retrieval practice improves long-term retention more than rereading (Roediger & Karpicke, 2006). This coach looks at YOUR local data — timing, completed session lengths, how quickly you act on tasks, game strengths — to suggest what to try first. No AI model is involved: it's a transparent rule engine, and everything stays on your device.",
 };
 
 /* Traduzione completa dei 3 test di screening: gli strumenti originali
